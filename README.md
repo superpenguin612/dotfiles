@@ -14,7 +14,7 @@ It asks for the profile once. Light profile (config files only, for lab boxes; i
 and removes chezmoi, its source and its config afterwards):
 
 ```sh
-sh -c "$(curl -fsLS get.chezmoi.io)" -- init --one-shot --purge-binary --promptChoice profile=light superpenguin612
+sh -c "$(curl -fsLS get.chezmoi.io)" -- -b /tmp init --one-shot --purge-binary --promptChoice profile=light superpenguin612
 ```
 
 Both need `curl` and `git`. On a box without them, copy the files by hand.
