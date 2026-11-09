@@ -1,0 +1,3 @@
+# New sessions open nvim, claude and a shell (tmux-project).
+[default_session]
+startup_command = "tmux-project"

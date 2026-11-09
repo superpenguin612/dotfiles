@@ -1,0 +1,14 @@
+#!/bin/sh
+# Project picker: open tmux sessions, git repos and project folders under
+# ~/src, then zoxide's history; connects to (or creates) the chosen session.
+src=$HOME/src
+choice=$({
+	sesh list -t 2>/dev/null
+	if [ -d "$src" ]; then
+		find "$src" -mindepth 2 -maxdepth 3 -name .git -type d -prune 2>/dev/null | sed 's#/\.git$##' | sort
+		find "$src" -mindepth 1 -maxdepth 1 -type d | sort
+	fi
+	sesh list -z 2>/dev/null
+} | sed "s#^$HOME/#~/#" | awk '!seen[$0]++' |
+	fzf --reverse --prompt 'project> ' --preview 'sesh preview {}' "$@")
+[ -n "$choice" ] && exec sesh connect "$choice"
