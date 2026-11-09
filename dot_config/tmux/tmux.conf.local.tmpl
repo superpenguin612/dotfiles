@@ -276,7 +276,7 @@ tmux_conf_theme_right_separator_sub="|"
 #     - #{username_ssh}
 tmux_conf_theme_status_left="  #S | ↑#{?uptime_y, #{uptime_y}y,}#{?uptime_d, #{uptime_d}d,}#{?uptime_h, #{uptime_h}h,}#{?uptime_m, #{uptime_m}m,} "
 #tmux_conf_theme_status_left=" ❐ #S | ↑#{?uptime_y, #{uptime_y}y,}#{?uptime_d, #{uptime_d}d,}#{?uptime_h, #{uptime_h}h,}#{?uptime_m, #{uptime_m}m,} | #{pretty_pane_current_path} "
-tmux_conf_theme_status_right="#{?@agents_asking,#[fg=#f7768e]? #{@agents_asking} asking #[fg=#a9b1d6],}#{?@agents_waiting,#[fg=#ff9e64]● #{@agents_waiting} waiting #[fg=#a9b1d6],} #{prefix}#{mouse}#{pairing}#{synchronized}#{?battery_status, #{battery_status},}#{?battery_bar, #{battery_bar},}#{?battery_percentage, #{battery_percentage},} , %R , %d %b | #{username}#{root} | #{hostname} "
+tmux_conf_theme_status_right="#[range=user|agents]#{?@agents_asking,#[fg=#f7768e]? #{@agents_asking} asking #[fg=#a9b1d6],}#{?@agents_waiting,#[fg=#ff9e64]● #{@agents_waiting} waiting #[fg=#a9b1d6],}#[norange] #{prefix}#{mouse}#{pairing}#{synchronized}#{?battery_status, #{battery_status},}#{?battery_bar, #{battery_bar},}#{?battery_percentage, #{battery_percentage},} , %R , %d %b | #{username}#{root} | #{hostname} "
 
 # status left style
 tmux_conf_theme_status_left_fg="$tmux_conf_theme_colour_6,#a9b1d6,$tmux_conf_theme_colour_8"
@@ -443,7 +443,17 @@ bind a display-popup -E -w 90% -h 90% -d '#{pane_current_path}' claude
 # N goes to the oldest ask, else the oldest other mark
 # shortcut: choose-tree can't sort by a user option, so W lists by index, not oldest first
 bind W choose-tree -Zw -f '#{@agent_waiting}'
-bind N run-shell 'l=$(tmux list-windows -a -F "##{@agent_waiting}|##{window_id}" | grep -v "^|" | sort -t"|" -k1,1n); w=$({ printf "%s\\n" "$l" | grep "|ask|"; printf "%s\\n" "$l" | grep -v "|ask|"; } | grep . | head -n1 | sed "s/.*|//"); if [ -n "$w" ]; then tmux switch-client -t "$w"; else tmux display "no agent waiting"; fi'
+bind N run-shell '"$HOME/.local/bin/tmux-agent-next" "#{client_name}"'
+# D52: a click on the status line while an agent-ping flash shows goes to the window that pinged;
+# a click on the asking/waiting count works like prefix + N; other clicks keep tmux's default.
+bind -n MouseDown1Status if -F '#{||:#{@agent_flash_win},#{==:#{mouse_status_range},agents}}' {
+  run-shell '"$HOME/.local/bin/tmux-agent-next" "#{client_name}" "#{@agent_flash_win}"'
+} {
+  switch-client -t =
+}
+# Clicks on status-left and status-right arrive as their own keys.
+bind -n MouseDown1StatusLeft if -F '#{@agent_flash_win}' { run-shell '"$HOME/.local/bin/tmux-agent-next" "#{client_name}" "#{@agent_flash_win}"' }
+bind -n MouseDown1StatusRight if -F '#{@agent_flash_win}' { run-shell '"$HOME/.local/bin/tmux-agent-next" "#{client_name}" "#{@agent_flash_win}"' }
 
 # window name: the pane title when the program set one (Claude sets the
 # conversation topic), else the command (D37)

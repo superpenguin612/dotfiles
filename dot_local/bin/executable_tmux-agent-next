@@ -1,0 +1,10 @@
+#!/bin/sh
+# tmux-agent-next CLIENT [WINDOW]: switch CLIENT to WINDOW when given (the window behind an
+# agent-ping flash, D52), else to the oldest window where an agent asks (red ?), else to the oldest
+# other agent mark (D43). prefix + N and clicks on the status bar run it.
+w=$2
+if [ -z "$w" ]; then
+	l=$(tmux list-windows -a -F '#{@agent_waiting}|#{window_id}' | grep -v '^|' | sort -t'|' -k1,1n)
+	w=$({ printf '%s\n' "$l" | grep '|ask|'; printf '%s\n' "$l" | grep -v '|ask|'; } | grep . | head -n1 | sed 's/.*|//')
+fi
+if [ -n "$w" ]; then tmux switch-client -c "$1" -t "$w"; else tmux display -c "$1" 'no agent waiting'; fi
