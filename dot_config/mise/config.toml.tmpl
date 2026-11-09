@@ -7,7 +7,8 @@ python = "3.14"
 ast-grep = "latest"
 atuin = "latest"
 bat = "latest"
-btop = "latest"
+{{ if eq .chezmoi.os "linux" }}btop = "latest"  # mise has no macOS build; Brewfile installs it there
+{{ end -}}
 chezmoi = "latest"
 delta = "latest"
 direnv = "latest"
