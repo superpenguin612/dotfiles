@@ -496,6 +496,8 @@ tmux_conf_uninstall_plugins_on_reload=false
 # visit https://github.com/tmux-plugins for available plugins
 #set -g @plugin 'tmux-plugins/tmux-copycat'
 #set -g @plugin 'tmux-plugins/tmux-cpu'
+{{- if eq .profile "full" }}
+# Plugins only on the full profile; light boxes download nothing.
 set -g @plugin 'tmux-plugins/tmux-resurrect'
 set -g @plugin 'tmux-plugins/tmux-continuum'
 set -g @continuum-restore 'on'
@@ -505,6 +507,7 @@ set -g @resurrect-hook-post-restore-all 'command -v agent-ping >/dev/null 2>&1 &
 set -g @plugin 'christoomey/vim-tmux-navigator'
 # keep my prefix + C-l (clear screen and history), not the plugin's
 set -g @vim_navigator_prefix_mapping_clear_screen ''
+{{- end }}
 
 
 # -- custom variables ----------------------------------------------------------
