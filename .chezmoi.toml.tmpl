@@ -1,0 +1,8 @@
+{{- $profile := promptChoiceOnce . "profile" "profile" (list "full" "light") -}}
+{{- $src := joinPath .chezmoi.homeDir "src/agents/dotfiles" -}}
+{{- if stat $src }}
+sourceDir = {{ $src | quote }}
+{{- end }}
+
+[data]
+profile = {{ $profile | quote }}

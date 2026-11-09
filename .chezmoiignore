@@ -1,0 +1,20 @@
+README.md
+Brewfile
+docs/
+
+{{ if eq .profile "light" }}
+.config/nvim/
+.config/mise/
+.config/atuin/
+.config/bat/
+.config/lazygit/
+.config/yazi/
+.config/sesh/
+.config/starship.toml
+.config/zsh/plugins.txt
+{{ end }}
+
+{{ if ne .chezmoi.os "darwin" }}
+Library/
+.config/karabiner/
+{{ end }}
