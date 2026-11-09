@@ -39,6 +39,22 @@ Machine-specific settings go in these files, created empty if missing and never 
 Aliases and the zoxide `cd` load only in interactive shells that aren't run by an agent
 (`CLAUDECODE`, `CODEX_THREAD_ID`, `PI_CODING_AGENT`, `OMPCODE` or `AI_AGENT` set).
 
+## Mac: iTerm2 setup
+
+iTerm2 overwrites its settings when it quits, so these are done by hand once after the install:
+
+1. Settings → Profiles: select **dotfiles**, then Other Actions → Set as Default. Open a new window.
+2. Settings → General → Magic: turn on **Enable Python API**.
+3. Scripts → Manage → **Install Python Runtime**, then restart iTerm2. The AutoLaunch script
+   `agent_ping.py` starts with iTerm2 from then on.
+4. System Settings → Notifications: allow notifications for iTerm2 and for alerter (it asks the
+   first time it posts).
+
+`agent_ping.py` turns pings from
+[agent-ping](https://github.com/superpenguin612/llms/tree/main/contrib/agent-ping) on the dev
+machine into macOS notifications with a title and sound, through `alerter`. Clicking one brings
+that iTerm2 window forward.
+
 ## Mac SSH
 
 In the Mac's own `~/.ssh/config` (not tracked here):

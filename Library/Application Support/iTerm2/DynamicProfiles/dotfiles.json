@@ -10,6 +10,7 @@
       "BM Growl": true,
       "Send Terminal Generated Alerts": true,
       "Unlimited Scrollback": false,
+      "Scrollback Lines": 10000,
       "Ansi 0 Color": {
         "Alpha Component": 1.0,
         "Blue Component": 0.1176470588235294,
