@@ -1,0 +1,10 @@
+{{ if eq .profile "full" -}}
+#!/bin/sh
+# mise config hash: {{ include "dot_config/mise/config.toml.tmpl" | sha256sum }}
+set -eu
+command -v mise >/dev/null || curl -fsSL https://mise.run | sh
+export PATH="$HOME/.local/bin:$PATH"
+mise install --yes
+# bat reads the tokyonight theme from its cache
+mise exec bat -- bat cache --build >/dev/null
+{{ end -}}

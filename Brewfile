@@ -1,0 +1,7 @@
+cask "iterm2"
+cask "karabiner-elements"
+cask "raycast"
+cask "font-jetbrains-mono-nerd-font"
+brew "mise"
+brew "socat"
+brew "pngpaste"
