@@ -129,7 +129,8 @@ After `chezmoi apply` on a Mac, these steps are done once:
    and allow Calendar access when icalBuddy asks for it.
 4. Quit Logi Options+ and uninstall it before starting OpenLogi, since both take control of the
    mouse and keyboard; then give OpenLogi Accessibility and Input Monitoring. The MX Brio needs
-   no Logitech software, and CameraController adjusts its zoom, focus and exposure.
+   no Logitech software; CameraController adjusts its zoom, focus and exposure, though it has not
+   been updated since 2025 and may not work on macOS 26.
 5. Apply Tokyo Night themes in the apps that keep their own: Firefox, Obsidian, BetterDiscord,
    Slack (sidebar colors) and Raycast.
 
