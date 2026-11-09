@@ -1,0 +1,2 @@
+-- Keymaps on top of LazyVim's defaults. D10: only my additions, and those live with their
+-- plugins in lua/plugins/, so this file stays empty.
