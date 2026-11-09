@@ -1,0 +1,7 @@
+{{ if eq .chezmoi.os "darwin" -}}
+#!/bin/sh
+# Fast key repeat. Takes effect after logging out and back in.
+set -eu
+defaults write -g KeyRepeat -int 2
+defaults write -g InitialKeyRepeat -int 15
+{{ end -}}
