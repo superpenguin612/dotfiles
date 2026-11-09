@@ -19,6 +19,7 @@ fi
 (( $+commands[direnv] )) && eval "$(direnv hook zsh)"
 (( $+commands[starship] )) && eval "$(starship init zsh)"
 (( $+commands[fzf] )) && source <(fzf --zsh)
+[[ -r ~/.config/zsh/fzf-tokyonight.zsh ]] && source ~/.config/zsh/fzf-tokyonight.zsh
 (( $+commands[atuin] )) && eval "$(atuin init zsh --disable-up-arrow)"
 if [[ -n $human ]]; then
   (( $+commands[zoxide] )) && eval "$(zoxide init zsh --cmd cd)"

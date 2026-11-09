@@ -13,6 +13,7 @@ justfile
 .config/sesh/
 .config/starship.toml
 .config/zsh/plugins.txt
+.config/zsh/fzf-tokyonight.zsh
 {{ end }}
 
 {{ if ne .chezmoi.os "darwin" }}
