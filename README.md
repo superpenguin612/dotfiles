@@ -56,6 +56,7 @@ attaches the `main` tmux session.
 
 ## Credits
 
-The Tokyo Night colors (`dot_config/bat/themes/tokyonight_night.tmTheme` and the iTerm2 profile's
+The Tokyo Night colors (`dot_config/bat/themes/tokyonight_night.tmTheme`, `dot_config/yazi/theme.toml`,
+`dot_config/zsh/fzf-tokyonight.zsh` and the iTerm2 profile's
 colors) come from [folke/tokyonight.nvim](https://github.com/folke/tokyonight.nvim), MIT License,
 Copyright (c) 2021 Folke Lemaitre.
