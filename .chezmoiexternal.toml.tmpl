@@ -4,11 +4,7 @@ type = "archive"
 url = "https://github.com/gpakosz/.tmux/archive/58a3dcc0d718ec0fa1c0d5a2fddd640a1ad7a5b7.tar.gz"
 stripComponents = 1
 {{ if eq .profile "full" }}
-[".config/tmux/plugins/tpm"]
-type = "archive"
-url = "https://github.com/tmux-plugins/tpm/archive/e261deb1b47614eed3400089ce7197dc68acc4eb.tar.gz"
-stripComponents = 1
-
+# tpm: oh-my-tmux clones and updates it itself when plugins are declared (full profile only).
 # antidote v2.3.0
 [".local/share/antidote"]
 type = "archive"
