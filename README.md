@@ -55,6 +55,30 @@ iTerm2 overwrites its settings when it quits, so these are done by hand once aft
 machine into macOS notifications with a title and sound, through `alerter`. Clicking one brings
 that iTerm2 window forward.
 
+## Python
+
+mise installs every tool, Python ones included; uv handles Python projects and scripts.
+
+- Command-line tool: add `"pipx:<pkg>" = "latest"` to `dot_config/mise/config.toml.tmpl` (mise
+  installs it in its own env through uv), or `mise use -g pipx:<pkg>` to try one.
+- Project: `uv init`, `uv add <pkg>`, `uv run <cmd>` (a `.venv` in the repo).
+- One-off script: `uv run --with pandas python script.py` (nothing to keep around).
+
+`PIP_REQUIRE_VIRTUALENV` is set, so `pip install` refuses to run outside a venv.
+
+Cleaning up an older Mac setup (Miniconda, pipx, Homebrew Pythons), once:
+
+```sh
+conda env list                       # anything worth keeping? export it first
+brew uninstall --cask miniconda
+rm -rf ~/.conda ~/.condarc           # and delete the "conda initialize" block in ~/.bash_profile
+brew uninstall pipx
+brew uninstall python@3.12 python@3.13 python@3.15   # brew refuses any that something still needs
+ls ~/Library/Python 2>/dev/null      # old `pip install --user` packages; delete once the uv tools work
+```
+
+Apple's `/usr/bin/python3` stays; nothing else should use it.
+
 ## Mac SSH
 
 In the Mac's own `~/.ssh/config` (not tracked here):

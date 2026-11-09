@@ -8,5 +8,7 @@ path=(~/.local/bin $path)
 path=(~/.local/share/mise/shims $path)
 export EDITOR=nvim VISUAL=nvim
 (( $+commands[nvim] )) || export EDITOR=vim VISUAL=vim
+# pip installs only inside a venv; tools come from `uv tool`, libraries from `uv run --with` (D55, D56).
+export PIP_REQUIRE_VIRTUALENV=true
 
 [[ -r ~/.zshenv.local ]] && source ~/.zshenv.local

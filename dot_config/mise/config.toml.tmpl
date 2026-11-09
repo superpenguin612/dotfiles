@@ -20,6 +20,7 @@ jq = "latest"
 just = "latest"
 lazygit = "latest"
 ripgrep = "latest"
+shellcheck = "latest"
 starship = "latest"
 vivid = "latest"
 tlrc = "latest"
@@ -32,3 +33,20 @@ zoxide = "latest"
 "github:joshmedeski/sesh" = "latest"
 "github:iffse/pay-respects" = "latest"
 "github:dlvhdr/gh-dash" = "latest"
+
+# Python command-line tools (D54): mise installs each into its own env with uv.
+"pipx:flask-unsign" = { version = "latest", uvx_args = "--with flask-unsign-wordlist" }
+"pipx:markitdown" = { version = "latest", extras = "all" }
+"pipx:pypykatz" = "latest"
+"pipx:ldapdomaindump" = "latest"
+"pipx:ropgadget" = "latest"
+"pipx:trafilatura" = "latest"
+"pipx:yt-dlp" = "latest"
+"pipx:impacket" = "latest"
+# shortcut: NetExec's last release no longer builds (its certipy dependency was renamed), so this
+# tracks main and `mise up` won't refresh it; pin a release once one builds again.
+"pipx:Pennyw0rth/NetExec" = "main"
+"pipx:certipy-ad" = "latest"
+"pipx:bloodhound-ce" = "latest"
+"pipx:cddmp/enum4linux-ng" = "latest"
+"pipx:ansible-core" = { version = "latest", uvx_args = "--with ansible-lint --with-executables-from ansible-lint" }
