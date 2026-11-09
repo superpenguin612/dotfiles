@@ -1,6 +1,7 @@
 README.md
 Brewfile
 docs/
+justfile
 
 {{ if eq .profile "light" }}
 .config/nvim/
