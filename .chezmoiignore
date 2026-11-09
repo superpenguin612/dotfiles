@@ -14,6 +14,10 @@ justfile
 .config/starship.toml
 .config/zsh/plugins.txt
 .config/zsh/fzf-tokyonight.zsh
+.local/bin/tmux-pick
+.local/bin/tmux-project
+30-nvim.sh
+40-zoxide-seed.sh
 {{ end }}
 
 {{ if ne .chezmoi.os "darwin" }}

@@ -15,7 +15,9 @@ alias gs='git status' gd='git diff' gc='git commit' gp='git push'
 alias gl='git log --graph --pretty=format:"%C(yellow)%h%C(reset) %s %C(dim)%an, %ar%C(reset)%C(auto)%d" --abbrev-commit'
 unalias gco 2>/dev/null
 gco() { git checkout "${1:-$(git branch --all --format='%(refname:short)' | fzf | sed 's#^origin/##')}"; }
+{{- if eq .profile "full" }}
 alias t=tmux-pick
+{{- end }}
 alias cl=claude cluade=claude
 alias ..='cd ..' ...='cd ../..'
 mkcd() { mkdir -p -- "$1" && cd -- "$1"; }
