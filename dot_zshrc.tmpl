@@ -14,10 +14,23 @@ if [[ -r ~/.local/share/antidote/antidote.zsh ]]; then
   source ~/.local/share/antidote/antidote.zsh
   antidote load ~/.config/zsh/plugins.txt
 fi
+[[ -r ~/.config/zsh/highlight-tokyonight.zsh ]] && source ~/.config/zsh/highlight-tokyonight.zsh
+if (( $+commands[vivid] )); then
+  export LS_COLORS="$(vivid generate tokyonight-night)"
+  zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
+fi
 
 (( $+commands[mise] )) && eval "$(mise activate zsh)"
 (( $+commands[direnv] )) && eval "$(direnv hook zsh)"
-(( $+commands[starship] )) && eval "$(starship init zsh)"
+if (( $+commands[starship] )); then
+  eval "$(starship init zsh)"
+  # Transient prompt (D47): once a command runs, its prompt collapses to ❯ in the scrollback.
+  _prompt_full=$PROMPT _rprompt_full=$RPROMPT
+  _prompt_restore() { PROMPT=$_prompt_full RPROMPT=$_rprompt_full }
+  _prompt_collapse() { PROMPT='%F{%(?.#bb9af7.#f7768e)}❯%f ' RPROMPT=; zle .reset-prompt }
+  autoload -Uz add-zle-hook-widget && add-zle-hook-widget line-finish _prompt_collapse
+  precmd_functions+=(_prompt_restore)
+fi
 (( $+commands[fzf] )) && source <(fzf --zsh)
 [[ -r ~/.config/zsh/fzf-tokyonight.zsh ]] && source ~/.config/zsh/fzf-tokyonight.zsh
 (( $+commands[atuin] )) && eval "$(atuin init zsh --disable-up-arrow)"

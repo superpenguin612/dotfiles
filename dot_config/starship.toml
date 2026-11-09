@@ -1,10 +1,14 @@
-# Tokyonight night. Change palette to switch styles.
+# Tokyonight night, two lines of pills (D47). Change palette to switch styles.
+# The transient prompt (old prompts collapse to ❯) lives in ~/.zshrc.
 palette = "tokyonight_night"
 add_newline = false
-format = "$username$hostname$directory$git_branch$git_status$python$golang$nodejs$cmd_duration$line_break$character"
+format = """
+[╭─](comment)$os$hostname$directory$git_branch$git_status$python$golang$nodejs$fill$cmd_duration$time
+[╰─](comment)$character"""
 
 [palettes.tokyonight_night]
 bg = "#1a1b26"
+bg_hl = "#3b4261"
 fg = "#c0caf5"
 comment = "#565f89"
 blue = "#7aa2f7"
@@ -15,40 +19,68 @@ orange = "#ff9e64"
 red = "#f7768e"
 yellow = "#e0af68"
 
-[username]
-style_user = "magenta"
-format = "[$user]($style)@"
+[os]
+disabled = false
+style = "bg:bg_hl fg:fg"
+format = "[](fg:bg_hl)[ $symbol ]($style)[](fg:bg_hl) "
+
+[os.symbols]
+Macos = ""
+Ubuntu = ""
+Debian = ""
+Linux = ""
 
 [hostname]
-style = "magenta"
-format = "[$hostname]($style) "
+style = "bg:magenta fg:bg bold"
+format = "[](fg:magenta)[ $hostname ]($style)[](fg:magenta) "
 
 [directory]
-style = "bold blue"
+style = "bg:blue fg:bg bold"
+format = "[](fg:blue)[ $path ]($style)[$read_only]($style)[](fg:blue) "
+read_only = " 󰌾"
 truncation_length = 4
 
 [git_branch]
-style = "green"
-format = "[$symbol$branch]($style) "
+style = "bg:green fg:bg"
+format = "[](fg:green)[ $symbol$branch]($style)"
+symbol = " "
 
 [git_status]
-style = "yellow"
+style = "bg:green fg:bg"
+format = "([ $all_status$ahead_behind]($style))[](fg:green) "
 
 [python]
-style = "yellow"
-format = "[$symbol$version( \\($virtualenv\\))]($style) "
+style = "bg:yellow fg:bg"
+format = "[](fg:yellow)[ $symbol$version( \\($virtualenv\\)) ]($style)[](fg:yellow) "
+symbol = " "
 
 [golang]
-style = "cyan"
-format = "[$symbol$version]($style) "
+style = "bg:cyan fg:bg"
+format = "[](fg:cyan)[ $symbol$version ]($style)[](fg:cyan) "
+symbol = " "
 
+# D49: only real JS projects, not a stray node_modules or loose .js files.
 [nodejs]
-style = "green"
-format = "[$symbol$version]($style) "
+style = "bg:green fg:bg"
+format = "[](fg:green)[ $symbol$version ]($style)[](fg:green) "
+symbol = " "
+detect_files = ["package.json", ".node-version", ".nvmrc"]
+detect_folders = []
+detect_extensions = []
+
+[fill]
+symbol = "·"
+style = "comment"
 
 [cmd_duration]
+style = "yellow"
+format = " [ $duration]($style)"
+
+[time]
+disabled = false
 style = "comment"
-format = "[$duration]($style) "
+format = " [ $time]($style)"
+time_format = "%H:%M"
 
 [character]
 success_symbol = "[❯](magenta)"
