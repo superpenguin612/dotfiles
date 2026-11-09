@@ -28,5 +28,11 @@ justfile
 {{ else }}
 Library/
 .local/bin/raycast-export
+.local/bin/mac-defaults
+.local/bin/wallpaper-fetch
+.config/sketchybar/
+.config/borders/
+.config/fastfetch/
+.config/wallpapers/
 .config/karabiner/
 {{ end }}

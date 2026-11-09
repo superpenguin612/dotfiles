@@ -18,6 +18,7 @@ check:
       done
     done; done
     grep -l '^#!/bin/sh' dot_local/bin/executable_* | xargs shellcheck -S warning
+    shellcheck -S warning -x -P dot_config/sketchybar dot_config/sketchybar/executable_sketchybarrc dot_config/sketchybar/plugins/* dot_config/borders/executable_bordersrc
     python3 -m py_compile dot_local/bin/executable_raycast-export && rm -rf dot_local/bin/__pycache__
     for f in dot_zshrc.tmpl dot_zshenv.tmpl; do zsh -n "$out/full-linux/$f"; done
     find . -name '*.json' -not -path './.git/*' -not -path './.claude/*' -print0 | xargs -0 -n1 jq empty

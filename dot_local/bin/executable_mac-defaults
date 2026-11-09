@@ -1,0 +1,16 @@
+#!/bin/sh
+# mac-defaults: Dock, menu bar and appearance settings for the rice (D70). Safe to run again.
+d() { defaults write "$@"; }
+d com.apple.dock autohide -bool true
+d com.apple.dock autohide-delay -float 0
+d com.apple.dock autohide-time-modifier -float 0.4
+d com.apple.dock show-recents -bool false
+d com.apple.dock tilesize -int 44
+d com.apple.dock minimize-to-application -bool true
+# Spaces keep their order, so SketchyBar's numbers stay put.
+d com.apple.dock mru-spaces -bool false
+# SketchyBar replaces the menu bar; the native one shows on hover.
+d NSGlobalDomain _HIHideMenuBar -bool true
+osascript -e 'tell application "System Events" to tell appearance preferences to set dark mode to true'
+killall Dock SystemUIServer 2>/dev/null
+echo "done; set the accent and highlight colors in System Settings → Appearance"
