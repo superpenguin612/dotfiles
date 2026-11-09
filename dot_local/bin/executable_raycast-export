@@ -5,7 +5,7 @@
 """raycast-export [FILE.rayconfig]: decrypt a Raycast settings export into a readable, redacted
 raycast/settings.json in the dotfiles source (D64), and keep the original in iCloud Drive.
 
-FILE defaults to the newest *.rayconfig in ~/Downloads (Raycast → Settings → Advanced → Export).
+FILE defaults to the newest *.rayconfig in ~/Downloads (Raycast's Export Settings & Data command).
 The passphrase comes from the login keychain item `raycast-export` (store it once with
 `security add-generic-password -a "$USER" -s raycast-export -w`), else $RAYCAST_EXPORT_PASSPHRASE,
 else a prompt. Raycast asks for a password at every export; use that same one each time.

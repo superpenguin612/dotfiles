@@ -103,7 +103,7 @@ from the clipboard, a few commands) and search quicklinks; import them with Rayc
 Snippets and Import Quicklinks commands. Personal snippets, such as an email address or a postal
 address, are added in Raycast directly and are never committed here.
 
-`raycast-export` turns a Raycast export (Settings → Advanced → Export) into
+`raycast-export` turns a Raycast export (the Export Settings & Data command) into
 `raycast/settings.json`, a readable copy with the clipboard and notes removed and with snippet
 text, links, extension preferences and anything resembling a token replaced by `<redacted>`. It
 also copies the original file to iCloud Drive under `Raycast/`, which is the copy to import when
