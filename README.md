@@ -110,6 +110,34 @@ also copies the original file to iCloud Drive under `Raycast/`, which is the cop
 restoring. **Read the diff before committing `raycast/settings.json`**, since the redaction works
 by pattern and the export format is not documented.
 
+## Mac: menu bar, borders and the look
+
+The Brewfile installs SketchyBar and JankyBorders and starts both at login. SketchyBar replaces
+the menu bar on every display with Tokyo Night pills: the Spaces with their apps' icons and the
+front app on the left, and the agents waiting on the dev machine, the next calendar event, CPU and
+memory, volume, Wi-Fi, battery and the clock on the right. The `⋯` item opens a row containing
+every other menu bar app. JankyBorders draws a blue-to-purple border around the focused window.
+
+After `chezmoi apply` on a Mac, these steps are done once:
+
+1. Run `mac-defaults`, which sets the Dock to hide automatically, hides the native menu bar,
+   keeps Spaces in a fixed order and turns on dark mode. The accent and highlight colors are set
+   in System Settings → Appearance.
+2. In System Settings → Keyboard → Keyboard Shortcuts → Mission Control, turn on "Switch to
+   Desktop 1" through "Switch to Desktop 9" (⌃1 to ⌃9); clicking a Space in SketchyBar uses them.
+3. In System Settings → Privacy & Security, give SketchyBar Screen Recording (for the `⋯` row)
+   and allow Calendar access when icalBuddy asks for it.
+4. Quit Logi Options+ and uninstall it before starting OpenLogi, since both take control of the
+   mouse and keyboard; then give OpenLogi Accessibility and Input Monitoring. The MX Brio needs
+   no Logitech software, and CameraController adjusts its zoom, focus and exposure.
+5. Apply Tokyo Night themes in the apps that keep their own: Firefox, Obsidian, BetterDiscord,
+   Slack (sidebar colors) and Raycast.
+
+If clicking an icon in the `⋯` row doesn't open that app's menu, install Hidden Bar
+(`brew install --cask hiddenbar`) and use it in the native menu bar instead.
+
+`fastfetch` prints a system summary in the same colors when run.
+
 ## Python
 
 mise installs every tool, Python ones included; uv handles Python projects and scripts.
