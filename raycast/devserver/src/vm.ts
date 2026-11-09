@@ -16,8 +16,10 @@ export async function run(cmd: string, args: string[], timeout = 20000) {
   return (await exec(cmd, args, { timeout })).stdout;
 }
 
+// ClearAllForwardings keeps ~/.ssh/config's RemoteForward (the clipboard socket) on the interactive
+// session; a short connection would otherwise take it over and drop it. scp clears them itself.
 export async function ssh(remote: string) {
-  return run("/usr/bin/ssh", ["-o", "BatchMode=yes", "-o", "ConnectTimeout=5", host(), remote]);
+  return run("/usr/bin/ssh", ["-o", "BatchMode=yes", "-o", "ConnectTimeout=5", "-o", "ClearAllForwardings=yes", host(), remote]);
 }
 
 export async function vm(...args: string[]) {

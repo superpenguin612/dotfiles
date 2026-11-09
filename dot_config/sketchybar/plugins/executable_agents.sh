@@ -1,8 +1,9 @@
 #!/bin/bash
-# Agents waiting on me on the dev VM (agent-ping's counts), over SSH; the ControlMaster in
-# ~/.ssh/config keeps this to one connection. Hidden when nothing waits; grey when unreachable.
+# Agents waiting on me on the dev VM (agent-ping's counts), over SSH. Hidden when nothing waits;
+# grey when unreachable. ClearAllForwardings: without it each check would take over the
+# RemoteForward clipboard socket (~/.clip.sock) from the interactive session, then drop it.
 source "$CONFIG_DIR/colors.sh"
-out=$(/usr/bin/ssh -o BatchMode=yes -o ConnectTimeout=3 "${DEV_HOST:-devserver}" \
+out=$(/usr/bin/ssh -o BatchMode=yes -o ConnectTimeout=3 -o ClearAllForwardings=yes "${DEV_HOST:-devserver}" \
   'tmux show -gqv @agents_asking; tmux show -gqv @agents_waiting' 2>/dev/null) || {
   sketchybar --set "$NAME" drawing=on icon=󰚩 icon.color=$COMMENT label="–" label.color=$COMMENT
   exit 0

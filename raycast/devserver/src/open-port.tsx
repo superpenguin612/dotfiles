@@ -11,6 +11,8 @@ const listening = (port: number) =>
   });
 
 // A forward of its own (no ControlMaster), so it lives on after Raycast's command ends.
+// shortcut: this connection also takes the config's RemoteForward (the clipboard socket) while it
+// lives, and the socket dies with it; reconnect `dev` to restore image paste. Fix if it bites.
 export default async function Command(props: LaunchProps<{ arguments: { port: string } }>) {
   const port = Number(props.arguments.port.trim());
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
