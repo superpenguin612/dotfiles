@@ -1,0 +1,14 @@
+" Plain vim defaults for light boxes; Neovim has its own config on full installs.
+set nocompatible
+filetype plugin indent on
+syntax on
+set number relativenumber
+set expandtab shiftwidth=4 tabstop=4 smartindent
+set ignorecase smartcase incsearch hlsearch
+set hidden backspace=indent,eol,start
+set scrolloff=5 laststatus=2 ruler showcmd wildmenu
+set mouse=a
+set undofile undodir=~/.vim/undo//
+if !isdirectory(expand('~/.vim/undo')) | call mkdir(expand('~/.vim/undo'), 'p') | endif
+let mapleader = ' '
+nnoremap <Esc> :nohlsearch<CR><Esc>

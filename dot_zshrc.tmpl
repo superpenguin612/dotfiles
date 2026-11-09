@@ -1,0 +1,30 @@
+# Interactive zsh. Every tool is optional, so the light profile works with none installed.
+HISTFILE=~/.zsh_history HISTSIZE=100000 SAVEHIST=100000
+setopt share_history hist_ignore_dups hist_ignore_space auto_cd interactive_comments
+bindkey -e
+
+# Agents (Claude Code, omp: CLAUDECODE; Codex: CODEX_THREAD_ID; pi: PI_CODING_AGENT; generic: AI_AGENT)
+# get PATH and tools but no aliases or cd/cat overrides.
+[[ -z $CLAUDECODE$CODEX_THREAD_ID$PI_CODING_AGENT$OMPCODE$AI_AGENT ]] && human=1 || human=
+
+autoload -Uz compinit && compinit -C
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
+
+if [[ -r ~/.local/share/antidote/antidote.zsh ]]; then
+  source ~/.local/share/antidote/antidote.zsh
+  antidote load ~/.config/zsh/plugins.txt
+fi
+
+(( $+commands[mise] )) && eval "$(mise activate zsh)"
+(( $+commands[direnv] )) && eval "$(direnv hook zsh)"
+(( $+commands[starship] )) && eval "$(starship init zsh)"
+(( $+commands[fzf] )) && source <(fzf --zsh)
+(( $+commands[atuin] )) && eval "$(atuin init zsh --disable-up-arrow)"
+if [[ -n $human ]]; then
+  (( $+commands[zoxide] )) && eval "$(zoxide init zsh --cmd cd)"
+  (( $+commands[pay-respects] )) && eval "$(pay-respects zsh --alias f)"
+  source ~/.config/zsh/aliases.zsh
+fi
+unset human
+
+[[ -r ~/.zshrc.local ]] && source ~/.zshrc.local

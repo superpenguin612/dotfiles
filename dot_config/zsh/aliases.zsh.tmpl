@@ -1,0 +1,31 @@
+# Human shells only (sourced from .zshrc behind the agent guard).
+if (( $+commands[eza] )); then
+  alias ls='eza --group-directories-first'
+  alias ll='eza -l --git --group-directories-first'
+  alias la='eza -la --git --group-directories-first'
+  alias lt='eza --tree --level=2 --git'
+else
+  alias ll='ls -l' la='ls -la'
+fi
+# bat prints plain when piped
+(( $+commands[bat] )) && alias cat='bat --paging=never'
+(( $+commands[zoxide] )) && alias zi='cdi'
+alias v=nvim lg=lazygit
+alias gs='git status' gd='git diff' gc='git commit' gp='git push'
+alias gl='git log --graph --pretty=format:"%C(yellow)%h%C(reset) %s %C(dim)%an, %ar%C(reset)%C(auto)%d" --abbrev-commit'
+unalias gco 2>/dev/null
+gco() { git checkout "${1:-$(git branch --all --format='%(refname:short)' | fzf | sed 's#^origin/##')}"; }
+alias t=tmux-pick
+alias cl=claude cluade=claude
+alias ..='cd ..' ...='cd ../..'
+mkcd() { mkdir -p -- "$1" && cd -- "$1"; }
+{{- if eq .chezmoi.os "darwin" }}
+alias ports='lsof -iTCP -sTCP:LISTEN -n -P'
+: ${DEV_HOST:=devserver}
+alias dev='ssh -o ServerAliveInterval=30 -t "$DEV_HOST" tmux new -A -s main'
+{{- else }}
+alias ports='ss -tulpn'
+{{- end }}
+alias myip='curl -s ifconfig.me; echo'
+alias reload='exec zsh'
+alias dots='chezmoi cd && nvim .'

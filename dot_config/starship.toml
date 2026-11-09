@@ -1,0 +1,56 @@
+# Tokyonight night. Change palette to switch styles.
+palette = "tokyonight_night"
+add_newline = false
+format = "$username$hostname$directory$git_branch$git_status$python$golang$nodejs$cmd_duration$line_break$character"
+
+[palettes.tokyonight_night]
+bg = "#1a1b26"
+fg = "#c0caf5"
+comment = "#565f89"
+blue = "#7aa2f7"
+cyan = "#7dcfff"
+green = "#9ece6a"
+magenta = "#bb9af7"
+orange = "#ff9e64"
+red = "#f7768e"
+yellow = "#e0af68"
+
+[username]
+style_user = "magenta"
+format = "[$user]($style)@"
+
+[hostname]
+style = "magenta"
+format = "[$hostname]($style) "
+
+[directory]
+style = "bold blue"
+truncation_length = 4
+
+[git_branch]
+style = "green"
+format = "[$symbol$branch]($style) "
+
+[git_status]
+style = "yellow"
+
+[python]
+style = "yellow"
+format = "[$symbol$version( \\($virtualenv\\))]($style) "
+
+[golang]
+style = "cyan"
+format = "[$symbol$version]($style) "
+
+[nodejs]
+style = "green"
+format = "[$symbol$version]($style) "
+
+[cmd_duration]
+style = "comment"
+format = "[$duration]($style) "
+
+[character]
+success_symbol = "[❯](magenta)"
+error_symbol = "[❯](red)"
+vimcmd_symbol = "[❮](green)"

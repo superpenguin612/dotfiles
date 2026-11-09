@@ -1,0 +1,7 @@
+# Local history only: it holds lab hosts and commands, so it never syncs.
+auto_sync = false
+update_check = false
+search_mode = "fuzzy"
+filter_mode_shell_up_key_binding = "session"
+style = "compact"
+inline_height = 20
