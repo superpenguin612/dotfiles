@@ -52,3 +52,9 @@ Host devserver
 
 `dev` (Mac only) SSHes to `$DEV_HOST` (default `devserver`; set it in `~/.zshrc.local`) and
 attaches the `main` tmux session.
+
+## Credits
+
+The Tokyo Night colors (`dot_config/bat/themes/tokyonight_night.tmTheme` and the iTerm2 profile's
+colors) come from [folke/tokyonight.nvim](https://github.com/folke/tokyonight.nvim), MIT License,
+Copyright (c) 2021 Folke Lemaitre.
