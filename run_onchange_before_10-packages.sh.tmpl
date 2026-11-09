@@ -6,7 +6,7 @@ set -eu
 command -v brew >/dev/null || { echo "packages: install Homebrew first (https://brew.sh)"; exit 0; }
 brew bundle --file={{ joinPath .chezmoi.sourceDir "Brewfile" | quote }}
 {{- else if lookPath "apt-get" -}}
-pkgs="zsh tmux build-essential unzip curl git socat python3-venv xz-utils gzip tar"
+pkgs="zsh tmux build-essential unzip curl git socat python3-venv xz-utils gzip tar php-cli php-mbstring"
 missing=$(for p in $pkgs; do dpkg -s "$p" >/dev/null 2>&1 || echo "$p"; done)
 [ -z "$missing" ] && exit 0
 if [ "$(id -u)" = 0 ]; then sudo=; elif sudo -n true 2>/dev/null; then sudo=sudo; else
