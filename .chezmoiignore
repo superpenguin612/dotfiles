@@ -28,6 +28,7 @@ justfile
 {{ else }}
 Library/
 .local/bin/raycast-export
+.local/bin/clip-watch
 .local/bin/mac-defaults
 .config/sketchybar/
 .config/fastfetch/

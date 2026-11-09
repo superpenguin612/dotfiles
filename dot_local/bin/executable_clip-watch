@@ -1,0 +1,27 @@
+#!/usr/bin/osascript -l JavaScript
+// clip-watch: keeps the last image copied on this Mac in ~/.cache/clip/last.png, so pasting an
+// image on the dev VM (its wl-paste reads ~/.clip.sock, which `dev` forwards here) survives later
+// text copies. Runs as the launch agent local.clip-watch; checks the pasteboard twice a second.
+ObjC.import("AppKit");
+
+function run() {
+  const dir = $.NSHomeDirectory().js + "/.cache/clip";
+  $.NSFileManager.defaultManager.createDirectoryAtPathWithIntermediateDirectoriesAttributesError(dir, true, $(), $());
+  const out = dir + "/last.png";
+  const pb = $.NSPasteboard.generalPasteboard;
+  let seen = -1;
+  for (;;) {
+    const n = pb.changeCount;
+    if (n !== seen) {
+      seen = n;
+      let png = pb.dataForType("public.png");
+      if (png.isNil()) {
+        const tiff = pb.dataForType("public.tiff");
+        // 4 is NSBitmapImageFileTypePNG.
+        if (!tiff.isNil()) png = $.NSBitmapImageRep.imageRepWithData(tiff).representationUsingTypeProperties(4, $());
+      }
+      if (!png.isNil()) png.writeToFileAtomically(out, true);
+    }
+    delay(0.5);
+  }
+}

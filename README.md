@@ -183,6 +183,13 @@ Host devserver
 `dev` (Mac only) SSHes to `$DEV_HOST` (default `devserver`; set it in `~/.zshrc.local`) and
 attaches the `main` tmux session.
 
+`dev` also forwards the Mac's `~/.clip.sock` to the dev machine, where a `wl-paste` shim reads it,
+so pasting an image into an agent there works. The socket serves the last image copied on the
+Mac, which `clip-watch` (launch agent `local.clip-watch`) keeps in `~/.cache/clip/last.png`, so
+copying text afterwards does not replace it; `local.clip` runs the socket. Only `dev` carries the
+forward: **don't add a `RemoteForward` for the socket to `~/.ssh/config`**, since every other
+connection to the host would then take the socket over and drop it when it closes.
+
 ## Credits
 
 The Tokyo Night colors (`dot_config/bat/themes/tokyonight_night.tmTheme`, `dot_config/yazi/theme.toml`,

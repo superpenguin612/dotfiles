@@ -1,0 +1,11 @@
+{{- if eq .chezmoi.os "darwin" -}}
+#!/bin/sh
+# Reload the clipboard launch agents when they change.
+# local.clip-watch.plist {{ include "Library/LaunchAgents/local.clip-watch.plist.tmpl" | sha256sum }}
+# local.clip.plist {{ include "Library/LaunchAgents/local.clip.plist.tmpl" | sha256sum }}
+# clip-watch {{ include "dot_local/bin/executable_clip-watch" | sha256sum }}
+for a in local.clip-watch local.clip; do
+	launchctl bootout "gui/$(id -u)/$a" 2>/dev/null
+	launchctl bootstrap "gui/$(id -u)" "$HOME/Library/LaunchAgents/$a.plist"
+done
+{{- end }}

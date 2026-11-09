@@ -24,7 +24,8 @@ mkcd() { mkdir -p -- "$1" && cd -- "$1"; }
 {{- if eq .chezmoi.os "darwin" }}
 alias ports='lsof -iTCP -sTCP:LISTEN -n -P'
 : ${DEV_HOST:=devserver}
-alias dev='ssh -o ServerAliveInterval=30 -t "$DEV_HOST" tmux new -A -s main'
+# Only dev carries the clipboard forward, so other connections never take ~/.clip.sock over.
+alias dev='ssh -o ServerAliveInterval=30 -R "/home/$USER/.clip.sock:$HOME/.clip.sock" -t "$DEV_HOST" tmux new -A -s main'
 {{- else }}
 alias ports='ss -tulpn'
 {{- end }}
