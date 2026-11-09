@@ -115,13 +115,13 @@ security add-generic-password -a "$USER" -s raycast-export -w
 ``` **Read the diff before committing `raycast/settings.json`**, since the redaction works
 by pattern and the export format is not documented.
 
-## Mac: menu bar, borders and the look
+## Mac: menu bar and the look
 
-The Brewfile installs SketchyBar and JankyBorders and starts both at login. SketchyBar replaces
+The Brewfile installs SketchyBar and starts it at login. SketchyBar replaces
 the menu bar on every display with Tokyo Night pills: the Spaces with their apps' icons and the
 front app on the left, and the agents waiting on the dev machine, the next calendar event, CPU and
 memory, volume, Wi-Fi, battery and the clock on the right. The `⋯` item opens a row containing
-every other menu bar app. JankyBorders draws a blue-to-purple border around the focused window.
+every other menu bar app.
 
 After `chezmoi apply` on a Mac, these steps are done once:
 

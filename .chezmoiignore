@@ -30,7 +30,6 @@ Library/
 .local/bin/raycast-export
 .local/bin/mac-defaults
 .config/sketchybar/
-.config/borders/
 .config/fastfetch/
 .config/karabiner/
 {{ end }}

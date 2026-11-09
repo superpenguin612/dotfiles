@@ -11,7 +11,6 @@ tap "vjeantet/tap"
 brew "vjeantet/tap/alerter"
 tap "FelixKratz/formulae"
 brew "FelixKratz/formulae/sketchybar", restart_service: :changed
-brew "FelixKratz/formulae/borders", restart_service: :changed
 cask "font-sketchybar-app-font"
 brew "ical-buddy"
 brew "fastfetch"
