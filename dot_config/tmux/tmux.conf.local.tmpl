@@ -442,7 +442,11 @@ bind a display-popup -E -w 90% -h 90% -d '#{pane_current_path}' claude
 # '<epoch>|<reason>' and the global @agents_asking/@agents_waiting counts (D28, D43);
 # N goes to the oldest ask, else the oldest other mark
 # shortcut: choose-tree can't sort by a user option, so W lists by index, not oldest first
-bind W choose-tree -Zw -f '#{@agent_waiting}'
+# the tree marks waiting windows like the status line: red ? asks (with the question), yellow ●
+# other waits; a session row shows one mark per waiting window
+%hidden AGENT_TREE='#{?pane_format,#{pane_current_command},#{?window_format,#{?#{m:*|ask,#{@agent_waiting}},#[fg=#f7768e]? ,#{?@agent_waiting,#[fg=#e0af68]● ,}}#{window_name}#{window_flags}#{?@agent_text,#[fg=#565f89]  #{=60:@agent_text},},#[fg=#f7768e]#{W:#{?#{m:*|ask,#{@agent_waiting}},?,}}#[fg=#e0af68]#{W:#{?#{&&:#{@agent_waiting},#{!:#{m:*|ask,#{@agent_waiting}}}},●,}}#[default]#{?#{W:#{@agent_waiting}},  ,}#{session_windows} windows#{?session_attached, (attached),}}}'
+bind w choose-tree -Zw -F "$AGENT_TREE"
+bind W choose-tree -Zw -f '#{@agent_waiting}' -F "$AGENT_TREE"
 bind N run-shell '"$HOME/.local/bin/tmux-agent-next" "#{client_name}"'
 # D52: a click on the status line while an agent-ping flash shows goes to the window that pinged;
 # a click on the asking/waiting count works like prefix + N; other clicks keep tmux's default.
