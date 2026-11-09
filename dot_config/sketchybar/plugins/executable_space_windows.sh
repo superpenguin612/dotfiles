@@ -10,4 +10,4 @@ while read -r app; do
   icons+=" $icon_result"
 done < <(/usr/bin/jq -r '.apps | keys[]' <<<"$INFO")
 icons=${icons# }
-sketchybar --set "space.$space" label="${icons:-—}"
+sketchybar --set "space.$space" label="$icons" label.drawing="$([ -n "$icons" ] && echo on || echo off)"

@@ -8,22 +8,29 @@ source "$CONFIG_DIR/colors.sh"
 FONT="JetBrainsMono Nerd Font"
 APPFONT="sketchybar-app-font:Regular:15.0"
 
-sketchybar --bar position=top height=34 y_offset=3 margin=8 display=all color=$TRANSPARENT \
+# 37 pt is the menu bar height beside the notch on 14" and 16" MacBook Pros.
+sketchybar --bar position=top height=37 y_offset=0 margin=6 display=all color=$TRANSPARENT \
   padding_left=4 padding_right=4 topmost=off sticky=on shadow=off notch_width=200
 
 sketchybar --default updates=when_shown \
   icon.font="$FONT:Bold:14.0" icon.color=$FG icon.padding_left=9 icon.padding_right=4 \
   label.font="$FONT:Semibold:13.0" label.color=$FG label.padding_left=4 label.padding_right=9 \
-  background.color=$BG background.height=26 background.corner_radius=9 \
+  background.color=$BG background.height=28 background.corner_radius=10 \
   background.border_width=1 background.border_color=$BG_HL padding_left=3 padding_right=3
+
+# Items inside a group pill draw no background of their own.
+INNER="background.drawing=off padding_left=0 padding_right=0"
+GROUP="background.color=$BG background.height=28 background.corner_radius=10 background.border_width=1 background.border_color=$BG_HL"
 
 # Left: Spaces with their apps' icons, then the front app. A Space shows only on its display.
 for sid in 1 2 3 4 5 6 7 8 9; do
   sketchybar --add space space.$sid left \
-    --set space.$sid space=$sid icon=$sid icon.padding_left=10 \
-      label.font="$APPFONT" label.y_offset=-1 label.padding_right=11 \
+    --set space.$sid space=$sid icon=$sid icon.padding_left=9 $INNER \
+      background.color=$BG_HL background.height=22 background.corner_radius=7 \
+      label.font="$APPFONT" label.y_offset=-1 label.padding_right=9 \
       script="$P/space.sh" click_script="$P/space_click.sh $sid"
 done
+sketchybar --add bracket spaces '/space\.[0-9]/' --set spaces $GROUP
 sketchybar --add item space_windows left \
   --set space_windows drawing=off updates=on script="$P/space_windows.sh" \
   --subscribe space_windows space_windows_change
@@ -37,15 +44,19 @@ sketchybar --add item clock right \
   --set clock icon= icon.color=$BLUE update_freq=30 script="$P/clock.sh" \
   --add item battery right \
   --set battery update_freq=120 script="$P/battery.sh" \
+    click_script="open x-apple.systempreferences:com.apple.Battery-Settings.extension" \
   --subscribe battery power_source_change system_woke \
   --add item wifi right \
   --set wifi label.drawing=off icon.padding_right=9 script="$P/wifi.sh" \
+    click_script="open x-apple.systempreferences:com.apple.wifi-settings-extension" \
   --subscribe wifi wifi_change system_woke \
   --add item volume right \
   --set volume icon.color=$CYAN script="$P/volume.sh" \
+    click_script="open x-apple.systempreferences:com.apple.Sound-Settings.extension" \
   --subscribe volume volume_change \
   --add item cpu right \
   --set cpu icon= icon.color=$GREEN update_freq=5 script="$P/cpu.sh" \
+    click_script="open -a 'Activity Monitor'" \
   --add item calendar right \
   --set calendar icon= icon.color=$YELLOW update_freq=300 script="$P/calendar.sh" \
     click_script="open -a Calendar" \
@@ -54,6 +65,10 @@ sketchybar --add item clock right \
   --set agents update_freq=30 updates=on script="$P/agents.sh" \
     click_script="open raycast://extensions/superpenguin612/devserver/agents" \
   --subscribe agents system_woke
+
+# One pill for the system items.
+for i in clock battery wifi volume cpu; do sketchybar --set $i $INNER; done
+sketchybar --add bracket status cpu volume wifi battery clock --set status $GROUP
 
 # D68: every other menu bar app, as live copies in a popup.
 sketchybar --add item tray right \
