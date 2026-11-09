@@ -6,13 +6,12 @@
 raycast/settings.json in the dotfiles source (D64), and keep the original in iCloud Drive.
 
 FILE defaults to the newest *.rayconfig in ~/Downloads (Raycast's Export Settings & Data command).
-The passphrase comes from the login keychain item `raycast-export` (store it once with
-`security add-generic-password -a "$USER" -s raycast-export -w`), else $RAYCAST_EXPORT_PASSPHRASE,
-else a prompt. Raycast asks for a password at every export; use that same one each time.
+The passphrase is the login keychain item `raycast-export`, stored once with
+`security add-generic-password -a "$USER" -s raycast-export -w`; give Raycast that same password
+at every export.
 Read `git diff` before committing the result.
 """
 
-import getpass
 import gzip
 import hashlib
 import json
@@ -24,41 +23,20 @@ import sys
 from pathlib import Path
 
 from cryptography.exceptions import InvalidTag
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
-# Format per danielfstefan/vicinae-raycast-import (reverse-engineered).
-# shortcut: only the three known layouts; a new Raycast format fails loudly, then add it here.
-
-
-def gcm(passphrase, salt, iv, data):
-    key = hashlib.scrypt(passphrase.encode(), salt=salt, n=16384, r=8, p=1, dklen=32, maxmem=64 << 20)
-    return gzip.decompress(AESGCM(key).decrypt(iv, data, None))
+# Format per danielfstefan/vicinae-raycast-import (reverse-engineered): "RAYCFG3\n", a u32le length,
+# a gzipped JSON envelope with the hex iv and salt, then AES-256-GCM over gzipped JSON (tag last).
 
 
 def decrypt(raw, passphrase):
-    if raw[:8] == b"RAYCFG3\n":
-        n = int.from_bytes(raw[8:12], "little")
-        env = json.loads(gzip.decompress(raw[12 : 12 + n]))
-        enc = env["encryption"]
-        # AESGCM takes the 16-byte tag at the end of the data, as the file has it.
-        return gcm(passphrase, bytes.fromhex(enc["salt"]), bytes.fromhex(enc["iv"]), raw[12 + n :])
-    if raw[:3] == b"\x1f\x8b\x08":
-        env = json.loads(gzip.decompress(raw))
-        enc = env["encryption"]
-        data = bytes.fromhex(env["data"]) + bytes.fromhex(enc["authTag"])
-        return gcm(passphrase, bytes.fromhex(enc["salt"]), bytes.fromhex(enc["iv"]), data)
-    # v1: AES-256-CBC, key = SHA-256(passphrase); the first block is either the IV or junk.
-    key = hashlib.sha256(passphrase.encode()).digest()
-    for iv, body, skip in ((raw[:16], raw[16:], 0), (hashlib.sha256(key + passphrase.encode()).digest()[:16], raw, 16)):
-        d = Cipher(algorithms.AES(key), modes.CBC(iv)).decryptor()
-        pt = d.update(body) + d.finalize()
-        pt = pt[skip : len(pt) - pt[-1]]
-        try:
-            return gzip.decompress(pt)
-        except OSError:
-            continue
-    raise ValueError("not a Raycast export, or a wrong passphrase")
+    if raw[:8] != b"RAYCFG3\n":
+        sys.exit(f"not a current Raycast export (starts with {raw[:8]!r})")
+    n = int.from_bytes(raw[8:12], "little")
+    enc = json.loads(gzip.decompress(raw[12 : 12 + n]))["encryption"]
+    key = hashlib.scrypt(passphrase.encode(), salt=bytes.fromhex(enc["salt"]), n=16384, r=8, p=1, dklen=32, maxmem=64 << 20)
+    # AESGCM takes the 16-byte tag at the end of the data, as the file has it.
+    return gzip.decompress(AESGCM(key).decrypt(bytes.fromhex(enc["iv"]), raw[12 + n :], None))
 
 
 DROP = re.compile(r"clipboard|notes|history|chat|^ai", re.I)
@@ -92,15 +70,13 @@ def main():
             sys.exit("no *.rayconfig in ~/Downloads; export from Raycast first or pass a file")
         src = found[-1]
     kc = subprocess.run(["security", "find-generic-password", "-s", "raycast-export", "-w"], capture_output=True, text=True)
-    passphrase = (
-        (kc.stdout.strip() if kc.returncode == 0 else "")
-        or os.environ.get("RAYCAST_EXPORT_PASSPHRASE")
-        or getpass.getpass(f"Passphrase for {src.name}: ")
-    )
+    if kc.returncode != 0:
+        sys.exit('no keychain item raycast-export; run: security add-generic-password -a "$USER" -s raycast-export -w')
+    passphrase = kc.stdout.strip()
     try:
         data = json.loads(decrypt(src.read_bytes(), passphrase))
-    except (InvalidTag, ValueError):
-        sys.exit(f"could not decrypt {src.name}: wrong passphrase or an unknown format")
+    except InvalidTag:
+        sys.exit(f"could not decrypt {src.name}: wrong passphrase")
 
     repo = Path(subprocess.run(["chezmoi", "source-path"], capture_output=True, text=True, check=True).stdout.strip())
     out = repo / "raycast" / "settings.json"
