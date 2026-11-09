@@ -107,7 +107,12 @@ address, are added in Raycast directly and are never committed here.
 `raycast/settings.json`, a readable copy with the clipboard and notes removed and with snippet
 text, links, extension preferences and anything resembling a token replaced by `<redacted>`. It
 also copies the original file to iCloud Drive under `Raycast/`, which is the copy to import when
-restoring. **Read the diff before committing `raycast/settings.json`**, since the redaction works
+restoring. Raycast asks for a password at each export; use the same one every time and store it
+once in the login keychain, where `raycast-export` looks for it:
+
+```sh
+security add-generic-password -a "$USER" -s raycast-export -w
+``` **Read the diff before committing `raycast/settings.json`**, since the redaction works
 by pattern and the export format is not documented.
 
 ## Mac: menu bar, borders and the look

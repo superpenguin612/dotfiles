@@ -6,8 +6,10 @@
 raycast/settings.json in the dotfiles source (D64), and keep the original in iCloud Drive.
 
 FILE defaults to the newest *.rayconfig in ~/Downloads (Raycast → Settings → Advanced → Export).
-The passphrase comes from $RAYCAST_EXPORT_PASSPHRASE or a prompt; Raycast shows it under
-Settings → Extensions → Export Settings & Data. Read `git diff` before committing the result.
+The passphrase comes from the login keychain item `raycast-export` (store it once with
+`security add-generic-password -a "$USER" -s raycast-export -w`), else $RAYCAST_EXPORT_PASSPHRASE,
+else a prompt. Raycast asks for a password at every export; use that same one each time.
+Read `git diff` before committing the result.
 """
 
 import getpass
@@ -89,7 +91,12 @@ def main():
         if not found:
             sys.exit("no *.rayconfig in ~/Downloads; export from Raycast first or pass a file")
         src = found[-1]
-    passphrase = os.environ.get("RAYCAST_EXPORT_PASSPHRASE") or getpass.getpass(f"Passphrase for {src.name}: ")
+    kc = subprocess.run(["security", "find-generic-password", "-s", "raycast-export", "-w"], capture_output=True, text=True)
+    passphrase = (
+        (kc.stdout.strip() if kc.returncode == 0 else "")
+        or os.environ.get("RAYCAST_EXPORT_PASSPHRASE")
+        or getpass.getpass(f"Passphrase for {src.name}: ")
+    )
     try:
         data = json.loads(decrypt(src.read_bytes(), passphrase))
     except (InvalidTag, ValueError):
