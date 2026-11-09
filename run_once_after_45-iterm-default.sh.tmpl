@@ -1,0 +1,7 @@
+{{ if eq .chezmoi.os "darwin" -}}
+#!/bin/sh
+# Make the "dotfiles" Dynamic Profile iTerm2's default. The Guid matches
+# Library/Application Support/iTerm2/DynamicProfiles/dotfiles.json.
+set -eu
+defaults write com.googlecode.iterm2 "Default Bookmark Guid" -string ADEF3FB4-CE33-4FBB-96E2-A65F17465C9E
+{{ end -}}
