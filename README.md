@@ -34,6 +34,7 @@ Machine-specific settings go in these files, created empty if missing and never 
 
 - `~/.zshenv.local`, `~/.zshrc.local` (sourced last)
 - `~/.gitconfig.local` (included last: signing key, hooks)
+- `~/.config/tmux/local.conf` (sourced last)
 
 Aliases and the zoxide `cd` load only in interactive shells that aren't run by an agent
 (`CLAUDECODE`, `CODEX_THREAD_ID`, `PI_CODING_AGENT`, `OMPCODE` or `AI_AGENT` set).
