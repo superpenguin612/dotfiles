@@ -192,7 +192,8 @@
         "Color Space": "sRGB",
         "Green Component": 0.203921568627451,
         "Red Component": 0.1568627450980392
-      }
+      },
+      "Enable Triggers in Interactive Apps": false
     }
   ]
 }
