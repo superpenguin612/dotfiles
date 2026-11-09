@@ -1,0 +1,52 @@
+#!/bin/sh
+# Installs the Neovim plugins at the versions in lazy-lock.json, then the Mason tools (LSP
+# servers, formatters, linters, debuggers) and treesitter parsers the config asks for.
+# chezmoi re-runs this whenever the lockfile or the plugin specs change:
+# lazy-lock.json {{ include "dot_config/nvim/lazy-lock.json" | sha256sum }}
+# lazyvim.json {{ include "dot_config/nvim/lazyvim.json" | sha256sum }}
+set -eu
+command -v nvim >/dev/null || { echo "nvim not installed; skipping plugin setup" >&2; exit 0; }
+
+lua="${TMPDIR:-/tmp}/nvim-setup-$$.lua"
+trap 'rm -f "$lua"' EXIT
+cat >"$lua" <<'EOF'
+require("lazy").load({ plugins = { "mason.nvim", "mason-lspconfig.nvim", "nvim-lspconfig" } })
+local reg = require("mason-registry")
+local map = require("mason-lspconfig.mappings").get_mason_map().lspconfig_to_package
+-- tree-sitter-cli first: nvim-treesitter needs it to build the parsers below.
+local want = vim.list_extend({ "tree-sitter-cli" }, LazyVim.opts("mason.nvim").ensure_installed or {})
+for server, o in pairs(LazyVim.opts("nvim-lspconfig").servers) do
+  local on = o == true or (type(o) == "table" and o.enabled ~= false and o.mason ~= false)
+  if server ~= "*" and on and map[server] then
+    want[#want + 1] = map[server]
+  end
+end
+local refreshed = false
+reg.refresh(function() refreshed = true end)
+vim.wait(120000, function() return refreshed end, 200)
+for _, name in ipairs(want) do
+  local pkg = reg.get_package(name)
+  if not pkg:is_installed() and not pkg:is_installing() then
+    pkg:install()
+  end
+end
+vim.wait(1800000, function()
+  for _, name in ipairs(want) do
+    if reg.get_package(name):is_installing() then return false end
+  end
+  return true
+end, 1000)
+local missing = vim.tbl_filter(function(n) return not reg.is_installed(n) end, want)
+
+require("lazy").load({ plugins = { "nvim-treesitter" } })
+require("nvim-treesitter").install(LazyVim.opts("nvim-treesitter").ensure_installed):wait(1800000)
+
+if #missing > 0 then
+  io.stderr:write("Mason packages not installed: " .. table.concat(missing, ", ") .. "\n")
+  vim.cmd("cquit 1")
+end
+vim.cmd("qall!")
+EOF
+# One session: the restore's treesitter build starts Mason installs, and quitting before they
+# finish leaves half-installed packages behind.
+nvim --headless "+Lazy! restore" -c "luafile $lua"
