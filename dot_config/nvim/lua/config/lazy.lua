@@ -21,4 +21,6 @@ require("lazy").setup({
   install = { colorscheme = { "tokyonight", "habamax" } },
   -- The lockfile decides versions; updating is a deliberate :Lazy update plus a commit.
   checker = { enabled = false },
+  rocks = { enabled = false }, -- no plugin needs luarocks
+
 })
