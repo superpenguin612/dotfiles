@@ -21,6 +21,7 @@ check:
     for f in dot_zshrc.tmpl dot_zshenv.tmpl; do zsh -n "$out/full-linux/$f"; done
     find . -name '*.json' -not -path './.git/*' -not -path './.claude/*' -print0 | xargs -0 -n1 jq empty
     {{stylua}} --check dot_config/nvim
+    if [ -d raycast/devserver/node_modules ]; then (cd raycast/devserver && npx tsc --noEmit); fi
     echo "check: ok"
 
 # Format the Neovim Lua.

@@ -1,4 +1,5 @@
 README.md
+raycast/
 Brewfile
 docs/
 justfile
@@ -17,11 +18,14 @@ justfile
 .config/zsh/highlight-tokyonight.zsh
 .local/bin/tmux-pick
 .local/bin/tmux-project
+.local/bin/raycast-vm
 30-nvim.sh
 40-zoxide-seed.sh
 {{ end }}
 
-{{ if ne .chezmoi.os "darwin" }}
+{{ if eq .chezmoi.os "darwin" }}
+.local/bin/raycast-vm
+{{ else }}
 Library/
 .config/karabiner/
 {{ end }}

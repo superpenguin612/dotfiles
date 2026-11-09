@@ -1,0 +1,56 @@
+{
+  "$schema": "https://www.raycast.com/schemas/extension.json",
+  "name": "devserver",
+  "title": "Dev Server",
+  "description": "tmux sessions, waiting agents and files on my dev VM, over SSH.",
+  "icon": "icon.png",
+  "author": "superpenguin612",
+  "license": "MIT",
+  "categories": ["Developer Tools"],
+  "preferences": [
+    {
+      "name": "host",
+      "title": "SSH host",
+      "description": "Host name from ~/.ssh/config.",
+      "type": "textfield",
+      "required": false,
+      "default": "devserver"
+    }
+  ],
+  "commands": [
+    { "name": "sessions", "title": "Sessions", "description": "Open a tmux session or start one for a repo.", "mode": "view" },
+    { "name": "agents", "title": "Waiting Agents", "description": "Agents waiting on me, asks first.", "mode": "view" },
+    { "name": "new-task", "title": "New Claude Task", "description": "Start claude with a task in a project's session.", "mode": "view" },
+    { "name": "status", "title": "VM Status", "description": "Load, memory, disk and waiting agents.", "mode": "view" },
+    { "name": "repos", "title": "Repos on GitHub", "description": "Open one of the VM's repos on GitHub.", "mode": "view" },
+    {
+      "name": "copy-from-vm",
+      "title": "Copy from VM",
+      "description": "Copy a file or folder from the VM to ~/Downloads.",
+      "mode": "no-view",
+      "arguments": [{ "name": "path", "type": "text", "placeholder": "~/path/on/vm", "required": true }]
+    },
+    { "name": "send-to-vm", "title": "Send to VM", "description": "Send the selected Finder items to ~/docs/inbox on the VM.", "mode": "no-view" },
+    {
+      "name": "open-port",
+      "title": "Open VM Port",
+      "description": "Forward a VM port over SSH and open it in the browser.",
+      "mode": "no-view",
+      "arguments": [{ "name": "port", "type": "text", "placeholder": "8090", "required": true }]
+    }
+  ],
+  "dependencies": {
+    "@raycast/api": "^2.11.1",
+    "@raycast/utils": "^2.3.3"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.5",
+    "@types/react": "19.3.0",
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "build": "ray build",
+    "dev": "ray develop",
+    "check": "tsc --noEmit"
+  }
+}

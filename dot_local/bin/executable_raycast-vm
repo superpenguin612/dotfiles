@@ -1,0 +1,91 @@
+#!/bin/sh
+# raycast-vm CMD: the VM side of the Mac's Raycast extension `devserver` (D62), run over SSH.
+# Lists print tab-separated rows. Commands that show a window print `switched` when an attached
+# tmux client moved there, else `attach SESSION` for the Mac to open an iTerm2 tab attached to it.
+#   sessions             session NAME WINDOWS ATTACHED PATH, then repo - - - PATH for unopened repos
+#   agents               WINDOW_ID SESS:WIN NAME WHY AGE_S TEXT, asks first, then oldest first
+#   repos                PATH URL for repos under ~/src with a GitHub remote
+#   status               KEY VALUE rows: load, memory, disk, asking, waiting
+#   open SESSION|PATH    show a session, creating it for a repo path like sesh does
+#   go WINDOW_ID         show a window
+#   task SESSION|PATH TEXT...   new window there running claude "TEXT", then show it
+src=$HOME/src
+
+repos() { find "$src" -mindepth 2 -maxdepth 3 -name .git -prune 2>/dev/null | sed 's#/\.git$##' | sort; }
+
+# reveal TARGET: switch the most recently used client, else ask the Mac to attach.
+reveal() {
+	c=$(tmux list-clients -F '#{client_activity} #{client_tty}' 2>/dev/null | sort -n | tail -n1 | cut -d' ' -f2)
+	if [ -n "$c" ]; then
+		tmux switch-client -c "$c" -t "$1" && echo switched
+	else
+		echo "attach $(tmux display -p -t "$1" '#{session_name}')"
+	fi
+}
+
+# session TARGET: print the session for a name or a path, creating it for a path.
+session() {
+	case $1 in
+	/*)
+		s=$(tmux list-sessions -F '#{session_path}	#{session_name}' 2>/dev/null | awk -F '\t' -v p="$1" '$1==p {print $2; exit}')
+		if [ -z "$s" ]; then
+			# Like sesh: a session already named after the folder is reused.
+			s=$(basename "$1" | tr '.:' '__')
+			if ! tmux has-session -t "=$s" 2>/dev/null; then
+				tmux new-session -d -s "$s" -c "$1" || exit 1
+				tmux send-keys -t "=$s:" tmux-project Enter
+			fi
+		fi
+		echo "$s"
+		;;
+	*) tmux has-session -t "=$1" && echo "$1" ;;
+	esac
+}
+
+case $1 in
+sessions)
+	tmux list-sessions -F 'session	#{session_name}	#{session_windows}	#{session_attached}	#{session_path}' 2>/dev/null
+	open=$(tmux list-sessions -F '#{session_path}' 2>/dev/null)
+	repos | while read -r p; do
+		printf '%s\n' "$open" | grep -qxF "$p" || printf 'repo\t-\t-\t-\t%s\n' "$p"
+	done
+	;;
+agents)
+	now=$(date +%s)
+	tmux list-windows -a -F '#{@agent_waiting}	#{window_id}	#{session_name}:#{window_index}	#{window_name}	#{@agent_text}' |
+		awk -F '\t' -v now="$now" '$1 != "" {
+			split($1, m, "|"); print (m[2] == "ask" ? 0 : 1) "\t" m[1] "\t" $2 "\t" $3 "\t" $4 "\t" m[2] "\t" now - m[1] "\t" $5 }' |
+		sort -t "$(printf '\t')" -k1,1n -k2,2n | cut -f3-
+	;;
+repos)
+	repos | while read -r p; do
+		u=$(git -C "$p" remote get-url origin 2>/dev/null) || continue
+		case $u in *github.com[:/]*) ;; *) continue ;; esac
+		u=${u#*github.com[:/]}
+		printf '%s\thttps://github.com/%s\n' "$p" "${u%.git}"
+	done
+	;;
+status)
+	printf 'load\t%s\n' "$(cut -d' ' -f1-3 /proc/loadavg)"
+	free -h | awk '/^Mem:/ {print "memory\t" $3 " of " $2}'
+	df -h / | awk 'NR==2 {print "disk\t" $3 " of " $2 " (" $5 ")"}'
+	printf 'asking\t%s\n' "$(tmux show -gqv @agents_asking)"
+	printf 'waiting\t%s\n' "$(tmux show -gqv @agents_waiting)"
+	;;
+open) s=$(session "$2") && reveal "=$s:" ;;
+go) reveal "$2" ;;
+task)
+	s=$(session "$2") || exit 1
+	shift 2
+	dir=$(tmux display -p -t "=$s:" '#{session_path}')
+	w=$(tmux new-window -d -P -F '#{window_id}' -t "=$s:" -c "$dir" -n task) || exit 1
+	# The task text is typed as one single-quoted argument.
+	tmux send-keys -t "$w" -l "claude '$(printf '%s' "$*" | sed "s/'/'\\\\''/g")'"
+	tmux send-keys -t "$w" Enter
+	reveal "$w"
+	;;
+*)
+	sed -n '2,13s/^# \{0,1\}//p' "$0" >&2
+	exit 2
+	;;
+esac
