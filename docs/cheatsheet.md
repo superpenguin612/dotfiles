@@ -170,5 +170,5 @@ Aliases load in interactive human shells only, not in agent shells.
 | Item | Does |
 |---|---|
 | `dev` | SSH to the VM and attach (or create) the tmux session `main`. Host comes from `$DEV_HOST` in `~/.zshrc.local`, default `devserver`. |
-| Caps Lock | Intended: tap for Esc, hold for Ctrl. Set it up in Karabiner or similar; the repo does not configure it. |
+| Caps Lock | Tap for Esc, hold for Ctrl (Karabiner-Elements, `~/.config/karabiner/karabiner.json`). |
 | Paste from the Mac | The terminal's Cmd+V. Yanks in nvim and tmux go the other way by OSC 52. |
