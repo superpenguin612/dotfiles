@@ -1,0 +1,36 @@
+# Shared git settings. Signing keys, hooks and other machine-specific settings go in ~/.gitconfig.local.
+[user]
+	name = David Racovan
+	email = 74030080+superpenguin612@users.noreply.github.com
+[init]
+	defaultBranch = main
+[push]
+	autoSetupRemote = true
+[pull]
+	ff = only
+[diff]
+	algorithm = histogram
+	colorMoved = default
+[merge]
+	conflictstyle = zdiff3
+[rerere]
+	enabled = true
+{{- if eq .profile "full" }}
+[core]
+	pager = delta
+[interactive]
+	diffFilter = delta --color-only
+[delta]
+	navigate = true
+	side-by-side = false
+	line-numbers = true
+	syntax-theme = tokyonight_night
+[credential "https://github.com"]
+	helper =
+	helper = !gh auth git-credential
+[credential "https://gist.github.com"]
+	helper =
+	helper = !gh auth git-credential
+{{- end }}
+[include]
+	path = ~/.gitconfig.local
