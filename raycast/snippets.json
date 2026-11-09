@@ -1,0 +1,52 @@
+[
+  {
+    "name": "Date",
+    "keyword": ";date",
+    "text": "{date format=\"yyyy-MM-dd\"}"
+  },
+  {
+    "name": "Date and time",
+    "keyword": ";now",
+    "text": "{date format=\"yyyy-MM-dd HH:mm\"}"
+  },
+  {
+    "name": "ISO timestamp",
+    "keyword": ";iso",
+    "text": "{date format=\"yyyy-MM-dd'T'HH:mm:ssZ\"}"
+  },
+  {
+    "name": "Code block from clipboard",
+    "keyword": ";cb",
+    "text": "```\n{clipboard}\n```"
+  },
+  {
+    "name": "Shrug",
+    "keyword": ";shrug",
+    "text": "¯\\_(ツ)_/¯"
+  },
+  {
+    "name": "Table flip",
+    "keyword": ";flip",
+    "text": "(╯°□°)╯︵ ┻━┻"
+  },
+  {
+    "name": "Commit",
+    "keyword": ";gcm",
+    "text": "git commit -m \"{cursor}\""
+  },
+  {
+    "name": "uv one-off",
+    "keyword": ";uvw",
+    "text": "uv run --with {cursor} python"
+  },
+  {
+    "name": "Attach main",
+    "keyword": ";tm",
+    "text": "tmux new -A -s main"
+  },
+  {
+    "name": "Ping me",
+    "keyword": ";ping",
+    "text": "agent-ping ask \"{cursor}\""
+  }
+]

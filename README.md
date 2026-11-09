@@ -55,6 +55,61 @@ iTerm2 overwrites its settings when it quits, so these are done by hand once aft
 machine into macOS notifications with a title and sound, through `alerter`. Clicking one brings
 that iTerm2 window forward.
 
+## Mac: Raycast
+
+Raycast is the launcher and clipboard manager, opened with ⌥Space (Spotlight keeps ⌘Space). The
+right ⌘ key is a Hyper key (⌃⌥⇧⌘, set in `dot_config/karabiner/karabiner.json`), which no app uses
+for its own shortcuts. Raycast keeps its hotkeys in its own settings, so they are set by hand in
+Settings → Extensions:
+
+| Hyper + | Opens | Hyper + | Runs |
+|---|---|---|---|
+| T | iTerm | V | Clipboard History |
+| B | Firefox | E | Search Emoji & Symbols |
+| O | Obsidian | X | Search Snippets |
+| D | Discord | Space | Search Files |
+| S | Slack | K | Waiting Agents |
+| G | Signal | J | Sessions |
+| A | Claude | Q | New Claude Task |
+| P | Bitwarden | | |
+| F | Finder | | |
+| R | Zotero | | |
+
+Window management uses Hyper with the arrow keys for halves, Return to maximize, C to center,
+`[` and `]` for the left and right thirds, `\` for two thirds, N to move to the next display, and
+Z to restore. Clipboard History should keep its history for 3 months, which is the longest the free
+plan allows.
+
+From the Raycast Store: GitHub, Tailscale, Kill Process, Homebrew, Color Picker, Port Manager and
+Docker.
+
+### The devserver extension
+
+`raycast/devserver` is a private extension that reaches the dev machine over SSH (host
+`devserver`, which can be changed in the extension's preferences). Its commands are Sessions,
+Waiting Agents, New Claude Task, VM Status, Repos on GitHub, Copy from VM, Send to VM and Open VM
+Port. The work on the dev machine is done by `~/.local/bin/raycast-vm`, so that side must have
+these dotfiles applied as well. To install the extension, run the following once in the chezmoi
+source and stop it with Ctrl-C after Raycast shows the commands:
+
+```sh
+cd raycast/devserver && npm install && npm run dev
+```
+
+### Snippets, quicklinks and the settings backup
+
+`raycast/snippets.json` and `raycast/quicklinks.json` hold generic snippets (dates, a code block
+from the clipboard, a few commands) and search quicklinks; import them with Raycast's Import
+Snippets and Import Quicklinks commands. Personal snippets, such as an email address or a postal
+address, are added in Raycast directly and are never committed here.
+
+`raycast-export` turns a Raycast export (Settings → Advanced → Export) into
+`raycast/settings.json`, a readable copy with the clipboard and notes removed and with snippet
+text, links, extension preferences and anything resembling a token replaced by `<redacted>`. It
+also copies the original file to iCloud Drive under `Raycast/`, which is the copy to import when
+restoring. **Read the diff before committing `raycast/settings.json`**, since the redaction works
+by pattern and the export format is not documented.
+
 ## Python
 
 mise installs every tool, Python ones included; uv handles Python projects and scripts.

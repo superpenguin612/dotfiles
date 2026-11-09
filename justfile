@@ -17,7 +17,8 @@ check:
         case $t in ./run_*.sh.tmpl) if [ -s "$r" ]; then shellcheck -S warning -s sh "$r"; fi ;; esac
       done
     done; done
-    shellcheck -S warning dot_local/bin/executable_*
+    grep -l '^#!/bin/sh' dot_local/bin/executable_* | xargs shellcheck -S warning
+    python3 -m py_compile dot_local/bin/executable_raycast-export && rm -rf dot_local/bin/__pycache__
     for f in dot_zshrc.tmpl dot_zshenv.tmpl; do zsh -n "$out/full-linux/$f"; done
     find . -name '*.json' -not -path './.git/*' -not -path './.claude/*' -print0 | xargs -0 -n1 jq empty
     {{stylua}} --check dot_config/nvim

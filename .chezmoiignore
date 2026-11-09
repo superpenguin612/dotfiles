@@ -27,5 +27,6 @@ justfile
 .local/bin/raycast-vm
 {{ else }}
 Library/
+.local/bin/raycast-export
 .config/karabiner/
 {{ end }}

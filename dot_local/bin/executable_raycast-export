@@ -1,0 +1,113 @@
+#!/usr/bin/env -S uv run -q --script
+# /// script
+# dependencies = ["cryptography"]
+# ///
+"""raycast-export [FILE.rayconfig]: decrypt a Raycast settings export into a readable, redacted
+raycast/settings.json in the dotfiles source (D64), and keep the original in iCloud Drive.
+
+FILE defaults to the newest *.rayconfig in ~/Downloads (Raycast → Settings → Advanced → Export).
+The passphrase comes from $RAYCAST_EXPORT_PASSPHRASE or a prompt; Raycast shows it under
+Settings → Extensions → Export Settings & Data. Read `git diff` before committing the result.
+"""
+
+import getpass
+import gzip
+import hashlib
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+from cryptography.exceptions import InvalidTag
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+# Format per danielfstefan/vicinae-raycast-import (reverse-engineered).
+# shortcut: only the three known layouts; a new Raycast format fails loudly, then add it here.
+
+
+def gcm(passphrase, salt, iv, data):
+    key = hashlib.scrypt(passphrase.encode(), salt=salt, n=16384, r=8, p=1, dklen=32, maxmem=64 << 20)
+    return gzip.decompress(AESGCM(key).decrypt(iv, data, None))
+
+
+def decrypt(raw, passphrase):
+    if raw[:8] == b"RAYCFG3\n":
+        n = int.from_bytes(raw[8:12], "little")
+        env = json.loads(gzip.decompress(raw[12 : 12 + n]))
+        enc = env["encryption"]
+        # AESGCM takes the 16-byte tag at the end of the data, as the file has it.
+        return gcm(passphrase, bytes.fromhex(enc["salt"]), bytes.fromhex(enc["iv"]), raw[12 + n :])
+    if raw[:3] == b"\x1f\x8b\x08":
+        env = json.loads(gzip.decompress(raw))
+        enc = env["encryption"]
+        data = bytes.fromhex(env["data"]) + bytes.fromhex(enc["authTag"])
+        return gcm(passphrase, bytes.fromhex(enc["salt"]), bytes.fromhex(enc["iv"]), data)
+    # v1: AES-256-CBC, key = SHA-256(passphrase); the first block is either the IV or junk.
+    key = hashlib.sha256(passphrase.encode()).digest()
+    for iv, body, skip in ((raw[:16], raw[16:], 0), (hashlib.sha256(key + passphrase.encode()).digest()[:16], raw, 16)):
+        d = Cipher(algorithms.AES(key), modes.CBC(iv)).decryptor()
+        pt = d.update(body) + d.finalize()
+        pt = pt[skip : len(pt) - pt[-1]]
+        try:
+            return gzip.decompress(pt)
+        except OSError:
+            continue
+    raise ValueError("not a Raycast export, or a wrong passphrase")
+
+
+DROP = re.compile(r"clipboard|notes|history|chat|^ai", re.I)
+SECRET = re.compile(r"token|secret|password|passwd|apikey|api_key|auth(?!or)|cookie|credential|session|private", re.I)
+BODY = re.compile(r"^(text|rawContent|content|link|url)$", re.I)
+OPAQUE = re.compile(r"^[A-Za-z0-9+/=_\-.]{24,}$")
+HIDDEN = "<redacted>"
+
+
+def redact(v, key="", in_prefs=False):
+    if isinstance(v, dict):
+        return {k: redact(x, k, in_prefs or "preference" in k.lower()) for k, x in v.items()}
+    if isinstance(v, list):
+        return [redact(x, key, in_prefs) for x in v]
+    if isinstance(v, str):
+        if SECRET.search(key) or BODY.match(key) or in_prefs:
+            return HIDDEN if v else v
+        if OPAQUE.match(v) and not re.match(r"^[a-z0-9._\-]+$", v):  # ids and names stay readable
+            return HIDDEN
+    return v
+
+
+def main():
+    if len(sys.argv) > 1 and sys.argv[1] in ("-h", "--help"):
+        print(__doc__)
+        return
+    src = Path(sys.argv[1]) if len(sys.argv) > 1 else None
+    if src is None:
+        found = sorted(Path.home().joinpath("Downloads").glob("*.rayconfig"), key=os.path.getmtime)
+        if not found:
+            sys.exit("no *.rayconfig in ~/Downloads; export from Raycast first or pass a file")
+        src = found[-1]
+    passphrase = os.environ.get("RAYCAST_EXPORT_PASSPHRASE") or getpass.getpass(f"Passphrase for {src.name}: ")
+    try:
+        data = json.loads(decrypt(src.read_bytes(), passphrase))
+    except (InvalidTag, ValueError):
+        sys.exit(f"could not decrypt {src.name}: wrong passphrase or an unknown format")
+
+    repo = Path(subprocess.run(["chezmoi", "source-path"], capture_output=True, text=True, check=True).stdout.strip())
+    out = repo / "raycast" / "settings.json"
+    out.parent.mkdir(exist_ok=True)
+    kept = {k: v for k, v in data.items() if not DROP.search(k)}  # whole stores: clipboard, notes…
+    out.write_text(json.dumps(redact(kept), indent=2, sort_keys=True, ensure_ascii=False) + "\n")
+
+    icloud = Path.home() / "Library/Mobile Documents/com~apple~CloudDocs/Raycast"
+    icloud.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(src, icloud / src.name)
+    print(f"wrote {out}\nkept the original in {icloud / src.name}")
+    print("dropped:", ", ".join(sorted(k for k in data if DROP.search(k))) or "nothing")
+    print(f"review before committing: git -C {repo} diff -- raycast/settings.json")
+
+
+if __name__ == "__main__":
+    main()

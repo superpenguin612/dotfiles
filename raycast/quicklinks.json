@@ -1,0 +1,30 @@
+[
+  {
+    "name": "My repo",
+    "link": "https://github.com/superpenguin612/{argument name=\"repo\"}"
+  },
+  {
+    "name": "GitHub code search",
+    "link": "https://github.com/search?type=code&q={argument name=\"query\"}"
+  },
+  {
+    "name": "Tailscale machines",
+    "link": "https://login.tailscale.com/admin/machines"
+  },
+  {
+    "name": "Go packages",
+    "link": "https://pkg.go.dev/search?q={argument name=\"package\"}"
+  },
+  {
+    "name": "PyPI",
+    "link": "https://pypi.org/search/?q={argument name=\"package\"}"
+  },
+  {
+    "name": "MDN",
+    "link": "https://developer.mozilla.org/en-US/search?q={argument name=\"query\"}"
+  },
+  {
+    "name": "Man page",
+    "link": "https://manpages.debian.org/{argument name=\"page\"}"
+  }
+]
