@@ -272,24 +272,26 @@ def fzf(lines, *args):
     return r.stdout.rstrip("\n") if r.returncode == 0 else None
 
 
-def play(args):
-    flags = re.I if args[:1] == ["-i"] else 0
-    args = args[1:] if flags else args
-    if args and os.path.isfile(args[0]):
-        return play_cast(args[0])
+def less(path, line=1):
+    os.environ.setdefault("LESSUTFCHARDEF", "e000-f8ff:p")  # Nerd Font glyphs aren't binary
+    os.execvp("less", ["less", f"+{line}", path])
+
+
+def play(args, flags=0):
+    if len(args) == 1 and args[0].endswith((".cast", ".txt")) and os.path.isfile(args[0]):
+        return less(args[0]) if args[0].endswith(".txt") else play_cast(args[0])
     if not args:
         casts = [f for f in recordings() if f.endswith(".cast")]
         pick = fzf([os.path.relpath(f, ROOT) for f in casts])
         return pick and play_cast(os.path.join(ROOT, pick))
     me = shlex.quote(os.path.abspath(__file__))
-    pick = fzf(grep(args[0], flags=flags), "-d", "\t", "--with-nth", "1",
+    pick = fzf(grep(*args, flags=flags), "-d", "\t", "--with-nth", "1",
                "--preview", f"{me} context {{2}} {{3}}", "--preview-window", "down,12")
     if not pick:
         return
     _, path, n = pick.split("\t")
     if path.endswith(".txt"):
-        os.environ.setdefault("LESSUTFCHARDEF", "e000-f8ff:p")  # Nerd Font glyphs aren't binary
-        os.execvp("less", ["less", f"+{int(n) + 1}", path])
+        less(path, int(n) + 1)
     play_cast(path, file_lines(path)[int(n)][0])
 
 
@@ -313,7 +315,7 @@ def ls():
         print(f"{sess}  {len(casts)} casts  {size}  {when}" + ("  recording" if sess in recording else ""))
 
 
-USAGE = """usage: tmux-rec ls | grep [-i] PATTERN [SESSION] | play [-i] [PATTERN] | play FILE
+USAGE = """usage: tmux-rec ls | grep [-i] PATTERN [SESSION] | play [-i] [PATTERN [SESSION]] | play FILE
        tmux-rec toggle [SESSION] | resume
        tmux-rec record PANE_ID FILE | start-pane PANE_ID [--snapshot] | rename OLD NEW
        tmux-rec context FILE LINE  (fzf preview)"""
@@ -321,6 +323,8 @@ USAGE = """usage: tmux-rec ls | grep [-i] PATTERN [SESSION] | play [-i] [PATTERN
 
 def main(argv):
     cmd, args = (argv[0], argv[1:]) if argv else ("", [])
+    flags = re.I if "-i" in args and cmd in ("grep", "play") else 0
+    args = [a for a in args if a != "-i"] if flags else args
     if cmd == "record" and len(args) == 2:
         record(*args)
     elif cmd == "start-pane" and len(args) in (1, 2):
@@ -333,15 +337,11 @@ def main(argv):
         rename(*args)
     elif cmd == "ls" and not args:
         ls()
-    elif cmd == "grep" and args:
-        flags = re.I if args[0] == "-i" else 0
-        args = args[1:] if flags else args
-        if not 1 <= len(args) <= 2:
-            sys.exit(USAGE)
+    elif cmd == "grep" and 1 <= len(args) <= 2:
         for hit in grep(*args, flags=flags):
             print(hit)
     elif cmd == "play" and len(args) <= 2:
-        play(args)
+        play(args, flags)
     elif cmd == "context" and len(args) == 2:
         context(*args)
     else:
