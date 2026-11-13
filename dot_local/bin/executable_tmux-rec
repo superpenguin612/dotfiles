@@ -73,11 +73,14 @@ def event(t, kind, data):
 
 def record(pane, path):
     """Read the pane's output from stdin (pipe-pane) and write it as asciicast v2 events."""
-    w, h, sess, win, wname, idx, cwd, term = display(
+    info = display(
         pane,
         "#{pane_width}\t#{pane_height}\t#{session_name}\t#{window_index}\t#{window_name}\t"
         "#{pane_index}\t#{pane_current_path}\t#{default-terminal}",
     )
+    if not info:  # pane closed before the recorder started
+        return
+    w, h, sess, win, wname, idx, cwd, term = info
     header = {
         "version": 2,
         "width": int(w),
@@ -115,8 +118,13 @@ def start_pane(pane, snapshot=False):
         return
     _, _, sess, win, idx = info
     folder = os.path.join(ROOT, sess)
+    os.makedirs(ROOT, mode=0o700, exist_ok=True)
     os.makedirs(folder, mode=0o700, exist_ok=True)
-    base = os.path.join(folder, time.strftime("%Y%m%d-%H%M%S") + f"-w{win}p{idx}")
+    base = stem = os.path.join(folder, time.strftime("%Y%m%d-%H%M%S") + f"-w{win}p{idx}")
+    n = 1
+    while os.path.exists(base + ".cast"):  # toggled off and on within the same second
+        n += 1
+        base = f"{stem}-{n}"
     if snapshot:
         text = tmux("capture-pane", "-p", "-J", "-S", "-", "-t", pane) or ""
         with open(os.open(base + ".txt", os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), "w") as f:
@@ -224,7 +232,7 @@ def grep(pattern, sess=None, flags=0):
     hits = []
     for path in recordings(sess):
         folder, name = os.path.split(path)
-        pane = name.rsplit("-", 1)[1].split(".")[0]
+        pane = name.split(".")[0].split("-")[2]
         start = read_cast(path)[0]["timestamp"] if path.endswith(".cast") else 0
         for n, (t, line) in enumerate(file_lines(path)):
             if rx.search(line):
