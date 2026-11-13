@@ -144,6 +144,26 @@ If clicking an icon in the `⋯` row doesn't open that app's menu, install Hidde
 
 `fastfetch` prints a system summary in the same colors when run.
 
+## Recording tmux sessions
+
+prefix + R turns recording on or off for the current tmux session (full profile). While it's on,
+status-left shows a red `● REC`, and every pane in the session, including windows and splits made
+later, writes its output to `~/.local/share/tmux-rec/<session>/` as an asciicast file, one per
+pane per start. Turning it on also saves each pane's scrollback so far as a `.txt` snapshot. Only
+output is recorded, not keystrokes, but anything printed on screen (a token, a password shown by
+a command) ends up in the files, so turn recording off first. Recording comes back on its own
+after a resurrect restore. Nothing is deleted automatically.
+
+- `tmux-rec ls`: each recorded session with its number of casts, total size and newest start.
+- `tmux-rec grep [-i] PATTERN [SESSION]`: matching lines (Python regex) with session, pane and
+  time, or `snapshot`.
+- `tmux-rec play [-i] PATTERN`: pick a hit in fzf and replay that pane from 5 s before it with
+  asciinema (a snapshot hit opens in `less`). `tmux-rec play FILE` plays a cast from the start;
+  `tmux-rec play` alone picks a cast.
+
+Full-screen programs such as Neovim and Claude draw with cursor moves, so their text greps as
+fragments; a fragment still finds the moment to replay.
+
 ## Python
 
 mise installs every tool, Python ones included; uv handles Python projects and scripts.

@@ -124,6 +124,15 @@ To connect a Claude already running in another tmux window (window 2 of a projec
 
 Sending a prompt clears the marker. A Mac notification also appears.
 
+### Recording
+
+| Keys | Does |
+|---|---|
+| prefix + R | Record every pane of this session (red `● REC` in the status bar); again to stop. Screen output only, secrets included. |
+| `tmux-rec grep PATTERN` | Find a line in the recordings: session, pane, time. |
+| `tmux-rec play PATTERN` | Pick a hit and replay the pane from 5 s before it. |
+| `tmux-rec ls` | Sessions recorded, with sizes. Files are in `~/.local/share/tmux-rec`. |
+
 ### After a reboot
 
 tmux-resurrect and continuum restore sessions on their own. Claude and Codex panes run `claude --resume <id>` / `codex resume <id>` for you. Manual save is prefix + Ctrl-s, restore prefix + Ctrl-r.
