@@ -1,0 +1,188 @@
+#!/usr/bin/env python3
+"""tmux-rec: record tmux sessions to asciicast v2 files, then list, grep and replay them.
+
+prefix + R runs `toggle`; tmux hooks run `start-pane`, `rename` and (after a resurrect restore)
+`resume`; pipe-pane runs `record`. Files live in ~/.local/share/tmux-rec/<session>/.
+"""
+
+import codecs
+import json
+import os
+import shlex
+import subprocess
+import sys
+import time
+
+ROOT = os.path.expanduser("~/.local/share/tmux-rec")
+SESSIONS = os.path.join(ROOT, "sessions")
+GAP = 1.0  # seconds of quiet after which the recorder checks the pane size
+
+
+def tmux(*args):
+    r = subprocess.run(["tmux", *args], capture_output=True, text=True)
+    return r.stdout.rstrip("\n") if r.returncode == 0 else None
+
+
+def display(pane, fmt):
+    out = tmux("display", "-p", "-t", pane, fmt)
+    return None if out is None else out.split("\t")
+
+
+# -- the sessions file ---------------------------------------------------------
+
+
+def read_sessions():
+    try:
+        with open(SESSIONS) as f:
+            return [line.rstrip("\n") for line in f if line.strip()]
+    except FileNotFoundError:
+        return []
+
+
+def write_sessions(names):
+    os.makedirs(ROOT, mode=0o700, exist_ok=True)
+    tmp = SESSIONS + ".tmp"
+    with open(os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), "w") as f:
+        f.writelines(n + "\n" for n in names)
+    os.replace(tmp, SESSIONS)
+
+
+def add_session(names, name):
+    return names if name in names else names + [name]
+
+
+def remove_session(names, name):
+    return [n for n in names if n != name]
+
+
+def rename_session(names, old, new):
+    return list(dict.fromkeys(new if n == old else n for n in names))
+
+
+# -- recording -----------------------------------------------------------------
+
+
+def event(t, kind, data):
+    return json.dumps([round(t, 6), kind, data], ensure_ascii=False) + "\n"
+
+
+def record(pane, path):
+    """Read the pane's output from stdin (pipe-pane) and write it as asciicast v2 events."""
+    w, h, sess, win, wname, idx, cwd, term = display(
+        pane,
+        "#{pane_width}\t#{pane_height}\t#{session_name}\t#{window_index}\t#{window_name}\t"
+        "#{pane_index}\t#{pane_current_path}\t#{default-terminal}",
+    )
+    header = {
+        "version": 2,
+        "width": int(w),
+        "height": int(h),
+        "timestamp": int(time.time()),
+        "env": {"TERM": term},
+        "tmux": {"session": sess, "window": int(win), "window_name": wname, "pane": int(idx),
+                 "pane_id": pane, "cwd": cwd},
+    }
+    size = f"{w}x{h}"
+    dec = codecs.getincrementaldecoder("utf-8")(errors="replace")
+    with open(os.open(path, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600), "w",
+              encoding="utf-8") as out:
+        out.write(json.dumps(header) + "\n")
+        out.flush()
+        start = last = time.monotonic()
+        while data := os.read(0, 65536):
+            now = time.monotonic()
+            if now - last >= GAP:
+                s = display(pane, "#{pane_width}x#{pane_height}")
+                if s and s[0] != size:
+                    size = s[0]
+                    out.write(event(now - start, "r", size))
+            last = now
+            if text := dec.decode(data):
+                out.write(event(now - start, "o", text))
+                out.flush()
+
+
+def start_pane(pane, snapshot=False):
+    info = display(pane, "#{@rec}\t#{pane_pipe}\t#{session_name}\t#{window_index}\t#{pane_index}")
+    if not info or not info[0] or info[1] == "1":
+        return
+    _, _, sess, win, idx = info
+    folder = os.path.join(ROOT, sess)
+    os.makedirs(folder, mode=0o700, exist_ok=True)
+    base = os.path.join(folder, time.strftime("%Y%m%d-%H%M%S") + f"-w{win}p{idx}")
+    if snapshot:
+        text = tmux("capture-pane", "-p", "-J", "-S", "-", "-t", pane) or ""
+        with open(os.open(base + ".txt", os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), "w") as f:
+            f.write(text + "\n")
+    # pipe-pane's child gets the server's start environment, whose TMUX may name another server
+    cmd = "TMUX=" + " ".join(shlex.quote(a) for a in (
+        os.environ["TMUX"], sys.executable, os.path.abspath(__file__), "record", pane,
+        base + ".cast"))
+    # -o: never replace a pipe that a racing start-pane opened first
+    tmux("pipe-pane", "-O", "-o", "-t", pane, cmd)
+
+
+def session_panes(sess):
+    out = tmux("list-panes", "-s", "-t", f"={sess}:", "-F", "#{pane_id}")
+    return out.split() if out else []
+
+
+def turn_on(sess, snapshot):
+    tmux("set", "-t", f"={sess}:", "@rec", "1")
+    tmux("set", "-t", f"={sess}:", "@rec_name", sess)
+    for p in session_panes(sess):
+        start_pane(p, snapshot)
+
+
+def toggle(sess=None):
+    sess = sess or tmux("display", "-p", "#{session_name}")
+    if tmux("show", "-qv", "-t", f"={sess}:", "@rec"):
+        tmux("set", "-u", "-t", f"={sess}:", "@rec")
+        tmux("set", "-u", "-t", f"={sess}:", "@rec_name")
+        for p in session_panes(sess):
+            tmux("pipe-pane", "-t", p)
+        write_sessions(remove_session(read_sessions(), sess))
+        tmux("display", "recording off")
+    else:
+        turn_on(sess, snapshot=True)
+        write_sessions(add_session(read_sessions(), sess))
+        tmux("display", "recording on")
+
+
+def resume():
+    live = set((tmux("list-sessions", "-F", "#{session_name}") or "").splitlines())
+    for sess in read_sessions():
+        if sess in live:
+            turn_on(sess, snapshot=False)
+
+
+def rename(old, new):
+    write_sessions(rename_session(read_sessions(), old, new))
+    tmux("set", "-t", f"={new}:", "@rec_name", new)
+    src, dst = os.path.join(ROOT, old), os.path.join(ROOT, new)
+    if os.path.isdir(src) and not os.path.exists(dst):
+        os.rename(src, dst)
+
+
+USAGE = """usage: tmux-rec toggle [SESSION] | resume
+       tmux-rec record PANE_ID FILE | start-pane PANE_ID [--snapshot] | rename OLD NEW"""
+
+
+def main(argv):
+    cmd, args = (argv[0], argv[1:]) if argv else ("", [])
+    if cmd == "record" and len(args) == 2:
+        record(*args)
+    elif cmd == "start-pane" and len(args) in (1, 2):
+        start_pane(args[0], snapshot=args[1:] == ["--snapshot"])
+    elif cmd == "toggle" and len(args) <= 1:
+        toggle(*args)
+    elif cmd == "resume" and not args:
+        resume()
+    elif cmd == "rename" and len(args) == 2:
+        rename(*args)
+    else:
+        sys.exit(USAGE)
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

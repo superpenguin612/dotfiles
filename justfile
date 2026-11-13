@@ -19,12 +19,16 @@ check:
     done; done
     grep -l '^#!/bin/sh' dot_local/bin/executable_* | xargs shellcheck -S warning
     shellcheck -S warning -x -P dot_config/sketchybar dot_config/sketchybar/executable_sketchybarrc dot_config/sketchybar/plugins/*
-    python3 -m py_compile dot_local/bin/executable_raycast-export && rm -rf dot_local/bin/__pycache__
+    python3 -m py_compile dot_local/bin/executable_raycast-export dot_local/bin/executable_tmux-rec && rm -rf dot_local/bin/__pycache__
     for f in dot_zshrc.tmpl dot_zshenv.tmpl; do zsh -n "$out/full-linux/$f"; done
     find . -name '*.json' -not -path './.git/*' -not -path './.claude/*' -print0 | xargs -0 -n1 jq empty
     {{stylua}} --check dot_config/nvim
     if [ -d raycast/devserver/node_modules ]; then (cd raycast/devserver && npx tsc --noEmit); fi
     echo "check: ok"
+
+# Unit tests for the Python scripts.
+test:
+    python3 -B -m unittest discover tests
 
 # Format the Neovim Lua.
 fmt:

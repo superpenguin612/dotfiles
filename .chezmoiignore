@@ -3,6 +3,7 @@ raycast/
 Brewfile
 docs/
 justfile
+tests/
 
 {{ if eq .profile "light" }}
 .config/nvim/
@@ -18,6 +19,7 @@ justfile
 .config/zsh/highlight-tokyonight.zsh
 .local/bin/tmux-pick
 .local/bin/tmux-project
+.local/bin/tmux-rec
 .local/bin/raycast-vm
 30-nvim.sh
 40-zoxide-seed.sh
