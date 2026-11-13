@@ -5,12 +5,17 @@ prefix + R runs `toggle`; tmux hooks run `start-pane`, `rename` and (after a res
 `resume`; pipe-pane runs `record`. Files live in ~/.local/share/tmux-rec/<session>/.
 """
 
+import bisect
 import codecs
+import glob
+import itertools
 import json
 import os
+import re
 import shlex
 import subprocess
 import sys
+import tempfile
 import time
 
 ROOT = os.path.expanduser("~/.local/share/tmux-rec")
@@ -103,6 +108,8 @@ def record(pane, path):
 
 
 def start_pane(pane, snapshot=False):
+    # shortcut: no hooks for moved panes; add after-join-pane / after-break-pane handling if I
+    # start moving panes between recorded and unrecorded sessions.
     info = display(pane, "#{@rec}\t#{pane_pipe}\t#{session_name}\t#{window_index}\t#{pane_index}")
     if not info or not info[0] or info[1] == "1":
         return
@@ -164,8 +171,144 @@ def rename(old, new):
         os.rename(src, dst)
 
 
-USAGE = """usage: tmux-rec toggle [SESSION] | resume
-       tmux-rec record PANE_ID FILE | start-pane PANE_ID [--snapshot] | rename OLD NEW"""
+# -- searching and replay ------------------------------------------------------
+
+# CSI, OSC (ended by BEL or ST), charset selection, other two-byte escapes, line breaks, plain text
+TOKEN = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]|\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)?|\x1b[()*+].|\x1b.?"
+                   r"|\r\n|[\r\n]|[^\x1b\r\n]+")
+CONTROL = re.compile(r"[\x00-\x1f\x7f]")
+
+
+def read_cast(path):
+    with open(path, encoding="utf-8") as f:
+        header = json.loads(f.readline())
+        return header, [json.loads(line) for line in f if line.strip()]
+
+
+def cast_lines(events):
+    """Plain-text lines of the output events, each with the time of the event it started in."""
+    out = [e for e in events if e[1] == "o"]
+    text = "".join(e[2] for e in out)
+    starts = list(itertools.accumulate((len(e[2]) for e in out), initial=0))[:-1]
+    lines, buf, begin = [], [], 0
+    for m in TOKEN.finditer(text):
+        tok = m.group()
+        if tok in ("\r\n", "\r", "\n"):
+            lines.append((out[bisect.bisect_right(starts, begin) - 1][0], "".join(buf)))
+            buf, begin = [], m.end()
+        elif tok[0] != "\x1b":
+            buf.append(CONTROL.sub("", tok.replace("\t", " ")))
+    if buf:
+        lines.append((out[bisect.bisect_right(starts, begin) - 1][0], "".join(buf)))
+    return lines
+
+
+def file_lines(path):
+    """(time or None, line) for a cast or a snapshot."""
+    if path.endswith(".cast"):
+        return cast_lines(read_cast(path)[1])
+    with open(path, encoding="utf-8", errors="replace") as f:
+        return [(None, line.rstrip("\n").replace("\t", " ")) for line in f]
+
+
+def recordings(sess=None):
+    pattern = os.path.join(ROOT, glob.escape(sess) if sess else "*", "*")
+    return sorted(f for f in glob.glob(pattern) if f.endswith((".cast", ".txt")))
+
+
+def grep(pattern, sess=None, flags=0):
+    """Hit lines: session, pane, time or `snapshot`, the line; then file and line number."""
+    # shortcut: linear scan in Python; add a cached plain-text sidecar per cast if grep gets slow
+    # (likely once agent-pane casts reach hundreds of MB).
+    rx = re.compile(pattern, flags)
+    hits = []
+    for path in recordings(sess):
+        folder, name = os.path.split(path)
+        pane = name.rsplit("-", 1)[1].split(".")[0]
+        start = read_cast(path)[0]["timestamp"] if path.endswith(".cast") else 0
+        for n, (t, line) in enumerate(file_lines(path)):
+            if rx.search(line):
+                when = ("snapshot" if t is None else
+                        time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(start + t)))
+                hits.append(f"{os.path.basename(folder)}  {pane}  {when}  {line.strip()}\t{path}\t{n}")
+    return hits
+
+
+def shift_events(events, hit, lead=5.0):
+    """Events before hit - lead all at time 0, later ones moved back so the hit lands lead s in."""
+    cut = max(hit - lead, 0)
+    return [[max(e[0] - cut, 0), *e[1:]] for e in events]
+
+
+def context(path, n):
+    lines = file_lines(path)
+    n = int(n)
+    for i in range(max(n - 5, 0), min(n + 6, len(lines))):
+        print(("> " if i == n else "  ") + lines[i][1])
+
+
+def play_cast(path, hit=None):
+    if hit is None:
+        os.execvp("asciinema", ["asciinema", "play", "--idle-time-limit", "2", path])
+    header, events = read_cast(path)
+    with tempfile.NamedTemporaryFile("w", suffix=".cast", encoding="utf-8") as tmp:
+        tmp.write(json.dumps(header) + "\n")
+        tmp.writelines(json.dumps(e, ensure_ascii=False) + "\n" for e in shift_events(events, hit))
+        tmp.flush()
+        subprocess.run(["asciinema", "play", "--idle-time-limit", "2", tmp.name])
+
+
+def fzf(lines, *args):
+    r = subprocess.run(["fzf", "--no-sort", "--tac", *args], input="\n".join(lines),
+                       stdout=subprocess.PIPE, text=True)
+    return r.stdout.rstrip("\n") if r.returncode == 0 else None
+
+
+def play(args):
+    flags = re.I if args[:1] == ["-i"] else 0
+    args = args[1:] if flags else args
+    if args and os.path.isfile(args[0]):
+        return play_cast(args[0])
+    if not args:
+        casts = [f for f in recordings() if f.endswith(".cast")]
+        pick = fzf([os.path.relpath(f, ROOT) for f in casts])
+        return pick and play_cast(os.path.join(ROOT, pick))
+    me = shlex.quote(os.path.abspath(__file__))
+    pick = fzf(grep(args[0], flags=flags), "-d", "\t", "--with-nth", "1",
+               "--preview", f"{me} context {{2}} {{3}}", "--preview-window", "down,12")
+    if not pick:
+        return
+    _, path, n = pick.split("\t")
+    if path.endswith(".txt"):
+        os.environ.setdefault("LESSUTFCHARDEF", "e000-f8ff:p")  # Nerd Font glyphs aren't binary
+        os.execvp("less", ["less", f"+{int(n) + 1}", path])
+    play_cast(path, file_lines(path)[int(n)][0])
+
+
+def size_text(n):
+    for unit in "BKMG":
+        if n < 1024 or unit == "G":
+            return f"{n:.0f}{unit}" if unit == "B" else f"{n:.1f}{unit}"
+        n /= 1024
+
+
+def ls():
+    live = tmux("list-sessions", "-F", "#{session_name}\t#{@rec}") or ""
+    recording = {line.split("\t")[0] for line in live.splitlines() if line.endswith("\t1")}
+    for folder in sorted(glob.glob(os.path.join(ROOT, "*", ""))):
+        sess = os.path.basename(folder.rstrip("/"))
+        files = recordings(sess)
+        casts = [f for f in files if f.endswith(".cast")]
+        newest = max((os.path.basename(f)[:15] for f in files), default="")
+        when = time.strftime("%Y-%m-%d %H:%M:%S", time.strptime(newest, "%Y%m%d-%H%M%S")) if newest else "-"
+        size = size_text(sum(os.path.getsize(f) for f in files))
+        print(f"{sess}  {len(casts)} casts  {size}  {when}" + ("  recording" if sess in recording else ""))
+
+
+USAGE = """usage: tmux-rec ls | grep [-i] PATTERN [SESSION] | play [-i] [PATTERN] | play FILE
+       tmux-rec toggle [SESSION] | resume
+       tmux-rec record PANE_ID FILE | start-pane PANE_ID [--snapshot] | rename OLD NEW
+       tmux-rec context FILE LINE  (fzf preview)"""
 
 
 def main(argv):
@@ -180,6 +323,19 @@ def main(argv):
         resume()
     elif cmd == "rename" and len(args) == 2:
         rename(*args)
+    elif cmd == "ls" and not args:
+        ls()
+    elif cmd == "grep" and args:
+        flags = re.I if args[0] == "-i" else 0
+        args = args[1:] if flags else args
+        if not 1 <= len(args) <= 2:
+            sys.exit(USAGE)
+        for hit in grep(*args, flags=flags):
+            print(hit)
+    elif cmd == "play" and len(args) <= 2:
+        play(args)
+    elif cmd == "context" and len(args) == 2:
+        context(*args)
     else:
         sys.exit(USAGE)
 
