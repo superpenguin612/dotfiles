@@ -274,7 +274,7 @@ tmux_conf_theme_right_separator_sub="|"
 #     - #{uptime_s}
 #     - #{username}
 #     - #{username_ssh}
-tmux_conf_theme_status_left="  #S | ↑#{?uptime_y, #{uptime_y}y,}#{?uptime_d, #{uptime_d}d,}#{?uptime_h, #{uptime_h}h,}#{?uptime_m, #{uptime_m}m,} "
+tmux_conf_theme_status_left=" #{?@rec,#[bg=#f7768e] ● REC #[bg=#7aa2f7] ,} #S | ↑#{?uptime_y, #{uptime_y}y,}#{?uptime_d, #{uptime_d}d,}#{?uptime_h, #{uptime_h}h,}#{?uptime_m, #{uptime_m}m,} "
 #tmux_conf_theme_status_left=" ❐ #S | ↑#{?uptime_y, #{uptime_y}y,}#{?uptime_d, #{uptime_d}d,}#{?uptime_h, #{uptime_h}h,}#{?uptime_m, #{uptime_m}m,} | #{pretty_pane_current_path} "
 tmux_conf_theme_status_right="#[range=user|agents]#{?@agents_asking,#[fg=#f7768e]? #{@agents_asking} asking #[fg=#a9b1d6],}#{?@agents_waiting,#[fg=#ff9e64]● #{@agents_waiting} waiting #[fg=#a9b1d6],}#[norange] #{prefix}#{mouse}#{pairing}#{synchronized}#{?battery_status, #{battery_status},}#{?battery_bar, #{battery_bar},}#{?battery_percentage, #{battery_percentage},} , %R , %d %b | #{username}#{root} | #{hostname} "
 
@@ -517,11 +517,18 @@ set -g @plugin 'tmux-plugins/tmux-resurrect'
 set -g @plugin 'tmux-plugins/tmux-continuum'
 set -g @continuum-restore 'on'
 set -g @resurrect-strategy-nvim 'session'
-# resumes Claude and Codex in restored panes; does nothing without agent-ping
-set -g @resurrect-hook-post-restore-all 'command -v agent-ping >/dev/null 2>&1 && agent-ping restore; true'
+# resumes Claude and Codex in restored panes (does nothing without agent-ping), then recording
+set -g @resurrect-hook-post-restore-all 'command -v agent-ping >/dev/null 2>&1 && agent-ping restore; "$HOME/.local/bin/tmux-rec" resume; true'
 set -g @plugin 'christoomey/vim-tmux-navigator'
 # keep my prefix + C-l (clear screen and history), not the plugin's
 set -g @vim_navigator_prefix_mapping_clear_screen ''
+
+# prefix + R records every pane of the session to ~/.local/share/tmux-rec (tmux-rec); new windows
+# and splits join in. Indexed hooks, so a config reload replaces them instead of adding copies.
+bind R run-shell '"$HOME/.local/bin/tmux-rec" toggle "#{session_name}"'
+set-hook -g after-new-window[10] { if -F '#{@rec}' { run-shell -b '"$HOME/.local/bin/tmux-rec" start-pane "#{pane_id}"' } }
+set-hook -g after-split-window[10] { if -F '#{@rec}' { run-shell -b '"$HOME/.local/bin/tmux-rec" start-pane "#{pane_id}"' } }
+set-hook -g session-renamed[10] { if -F '#{@rec}' { run-shell -b '"$HOME/.local/bin/tmux-rec" rename "#{@rec_name}" "#{session_name}"' } }
 {{- end }}
 
 # Machine-specific tmux settings (untracked).
