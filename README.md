@@ -201,7 +201,9 @@ Host devserver
 ```
 
 `dev` (Mac only) SSHes to `$DEV_HOST` (default `devserver`; set it in `~/.zshrc.local`) and
-attaches the `main` tmux session.
+opens the project picker (`tmux-pick`) there: pick a project to start its session, or an open
+session to attach it. `dev NAME` attaches the session NAME instead, creating it if needed, so a
+second Mac window can sit on a different session than the first.
 
 `dev` also forwards the Mac's `~/.clip.sock` to the dev machine, where a `wl-paste` shim reads it,
 so pasting an image into an agent there works. The socket serves the last image copied on the

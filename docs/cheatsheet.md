@@ -178,6 +178,6 @@ Aliases load in interactive human shells only, not in agent shells.
 
 | Item | Does |
 |---|---|
-| `dev` | SSH to the VM and attach (or create) the tmux session `main`. Host comes from `$DEV_HOST` in `~/.zshrc.local`, default `devserver`. |
+| `dev` | SSH to the VM and open the project picker: a project starts its session, an open session attaches. `dev main` attaches (or creates) the session `main`. Use `dev` rather than `ssh devserver`, since only `dev` forwards the clipboard. Host comes from `$DEV_HOST` in `~/.zshrc.local`, default `devserver`. |
 | Caps Lock | Tap for Esc, hold for Ctrl (Karabiner-Elements, `~/.config/karabiner/karabiner.json`). |
 | Paste from the Mac | The terminal's Cmd+V. Yanks in nvim and tmux go the other way by OSC 52. |
