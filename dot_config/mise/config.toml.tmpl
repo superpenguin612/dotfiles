@@ -4,7 +4,10 @@ go = "1.27.2"
 neovim = "0.12"
 node = "lts"
 # Kali keeps its own Python, which has the apt python3-* packages that exploit scripts import.
-{{ if not (and (eq .chezmoi.os "linux") (eq (get (.chezmoi.osRelease | default dict) "id") "kali")) -}}
+# Its apt has no gh, so mise installs it there.
+{{ if and (eq .chezmoi.os "linux") (eq (get (.chezmoi.osRelease | default dict) "id") "kali") -}}
+gh = "latest"
+{{ else -}}
 python = "3.14"
 {{ end -}}
 ast-grep = "latest"
