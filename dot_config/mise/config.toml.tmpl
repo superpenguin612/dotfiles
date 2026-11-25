@@ -3,7 +3,12 @@
 go = "1.27.2"
 neovim = "0.12"
 node = "lts"
+{{ if and (eq .chezmoi.os "linux") (eq (get (.chezmoi.osRelease | default dict) "id") "kali") -}}
+# Kali: its own Python, which has the apt python3-* packages that exploit scripts import.
+python = "system"
+{{ else -}}
 python = "3.14"
+{{ end -}}
 ast-grep = "latest"
 atuin = "latest"
 bat = "latest"
