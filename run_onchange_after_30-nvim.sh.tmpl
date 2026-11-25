@@ -24,6 +24,13 @@ end
 local refreshed = false
 reg.refresh(function() refreshed = true end)
 vim.wait(120000, function() return refreshed end, 200)
+-- Some packages have no build for this platform (clangd on linux/arm64): skip them, don't fail.
+local function installable(n) return reg.get_package(n):is_installable() end
+local skipped = vim.tbl_filter(function(n) return not installable(n) end, want)
+want = vim.tbl_filter(installable, want)
+if #skipped > 0 then
+  io.stderr:write("Mason packages skipped, no build for this platform: " .. table.concat(skipped, ", ") .. "\n")
+end
 for _, name in ipairs(want) do
   local pkg = reg.get_package(name)
   if not pkg:is_installed() and not pkg:is_installing() then
