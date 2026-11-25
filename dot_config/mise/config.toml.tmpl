@@ -24,7 +24,9 @@ shellcheck = "latest"
 shfmt = "latest"
 starship = "latest"
 vivid = "latest"
-tlrc = "latest"
+# tlrc has no linux/arm64 build.
+{{ if not (and (eq .chezmoi.os "linux") (eq .chezmoi.arch "arm64")) }}tlrc = "latest"
+{{ end -}}
 tree-sitter = "latest"
 uv = "latest"
 yazi = "latest"
@@ -46,8 +48,10 @@ zoxide = "latest"
 "pipx:yt-dlp" = "latest"
 "pipx:impacket" = "latest"
 # shortcut: NetExec's last release no longer builds (its certipy dependency was renamed), so this
-# tracks main and `mise up` won't refresh it; pin a release once one builds again.
-"pipx:Pennyw0rth/NetExec" = "main"
+# tracks main and `mise up` won't refresh it; pin a release once one builds again. Kali uses apt's
+# netexec instead, since building main needs a Rust toolchain.
+{{ if not (and (eq .chezmoi.os "linux") (eq (get (.chezmoi.osRelease | default dict) "id") "kali")) }}"pipx:Pennyw0rth/NetExec" = "main"
+{{ end -}}
 "pipx:certipy-ad" = "latest"
 "pipx:bloodhound-ce" = "latest"
 "pipx:cddmp/enum4linux-ng" = "latest"
