@@ -28,6 +28,7 @@ format = "[](fg:bg_hl)[ $symbol ]($style)[](fg:bg_hl) "
 Macos = ""
 Ubuntu = ""
 Debian = ""
+Kali = ""
 Linux = ""
 
 [hostname]
